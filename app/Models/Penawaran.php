@@ -8,6 +8,17 @@ class Penawaran extends Model
 {
     protected $primaryKey = 'id_penawaran';
     protected $fillable = [
-        'perihal', 'nama_perusahaan', 'pic_perusahaan', 'pic_admin', 'no_penawaran', 'lokasi', 'tiket'
+        'perihal',
+        'nama_perusahaan',
+        'pic_perusahaan',
+        'pic_admin',
+        'no_penawaran',
+        'lokasi',
+        'tiket'
     ];
+
+    public function details()
+    {
+        return $this->hasMany(PenawaranDetail::class, 'id_penawaran');
+    }
 }
