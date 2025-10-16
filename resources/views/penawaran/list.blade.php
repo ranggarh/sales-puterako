@@ -1,6 +1,19 @@
 @extends('layouts.app')
 
 @section('content')
+    <style>
+        #formPanel {
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .translate-x-full {
+            transform: translateX(100%);
+        }
+
+        .translate-x-0 {
+            transform: translateX(0);
+        }
+    </style>
     <div class="container mx-auto p-8">
         <div class="flex justify-between items-center mb-6">
             <h1 class="text-xl font-bold">List Penawaran</h1>
@@ -50,28 +63,22 @@
                                             Tiket
                                         </button>
                                     @else
+                                        <a href="{{ route('penawaran.show', ['id' => $p->id_penawaran]) }}"
+                                            class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-700 transition"
+                                            title="Lihat Detail">
+                                            <x-lucide-file-text class="w-5 h-5 inline" />
+                                        </a>
                                         <button
-                                            class="bg-blue-500 text-white px-2 py-1 rounded flex items-center gap-1 text-xs hover:bg-blue-600 transition">
+                                            class="bg-yellow-500 text-white px-2 py-2 rounded flex items-center gap-1 text-xs hover:bg-yellow-700 transition"
+                                            title="Edit">
                                             <x-lucide-square-pen class="w-5 h-5 inline" />
-                                            Buat
                                         </button>
                                     @endif
-                                    <button class="bg-blue-200 text-blue-700 px-2 py-1 rounded hover:bg-blue-300 transition"
-                                        title="Lihat">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-eye" width="14"
-                                            height="14" fill="none" stroke="currentColor" stroke-width="2">
-                                            <circle cx="12" cy="12" r="3" />
-                                            <path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z" />
-                                        </svg>
+                                    <button class="bg-red-500 text-white px-2 py-2 rounded hover:bg-red-700 transition"
+                                        title="Hapus Data">
+                                        <x-lucide-trash-2 class="w-5 h-5 inline" />
                                     </button>
-                                    <button class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 transition"
-                                        title="Hapus">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-x" width="14"
-                                            height="14" fill="none" stroke="currentColor" stroke-width="2">
-                                            <path d="M18 6 6 18" />
-                                            <path d="m6 6 12 12" />
-                                        </svg>
-                                    </button>
+
                                 </div>
                             </td>
                         </tr>
@@ -157,22 +164,23 @@
             formSlide.classList.remove('hidden');
             setTimeout(() => {
                 formPanel.classList.remove('translate-x-full');
+                formPanel.classList.add('translate-x-0');
             }, 10);
         });
 
-        closeForm.addEventListener('click', function() {
+        function closeModal() {
+            formPanel.classList.remove('translate-x-0');
             formPanel.classList.add('translate-x-full');
             setTimeout(() => {
                 formSlide.classList.add('hidden');
-            }, 300);
-        });
+            }, 400); // Sesuaikan dengan durasi transition
+        }
+
+        closeForm.addEventListener('click', closeModal);
 
         formSlide.addEventListener('click', function(e) {
             if (e.target === formSlide) {
-                formPanel.classList.add('translate-x-full');
-                setTimeout(() => {
-                    formSlide.classList.add('hidden');
-                }, 300);
+                closeModal();
             }
         });
     </script>

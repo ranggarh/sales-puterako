@@ -29,4 +29,10 @@ class PenawaranController extends Controller
         // Halaman Rekap Survey
         return view('penawaran.rekapSurvey');
     }
+    public function show(Request $request)
+    {
+        $id = $request->query('id');
+        $penawaran = \App\Models\Penawaran::find($id);
+        return view('penawaran.detail', compact('penawaran'));
+    }
 }
