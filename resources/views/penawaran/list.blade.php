@@ -118,7 +118,7 @@
                     </svg>
                 </button>
             </div>
-            <form method="POST" action="{{ route('penawaran.store') }}">
+            <form id="formPanel" method="POST" action="{{ route('penawaran.store') }}">
                 @csrf
                 <div class="mb-4">
                     <label class="block mb-1 font-medium text-sm">Perihal</label>
@@ -127,6 +127,10 @@
                 <div class="mb-4">
                     <label class="block mb-1 font-medium text-sm">Nama Perusahaan</label>
                     <input type="text" name="nama_perusahaan" class="w-full border rounded px-3 py-2 text-sm" required>
+                </div>
+                <div class="mb-4">
+                    <label class="block mb-1 font-medium text-sm">Lokasi</label>
+                    <input type="text" name="lokasi" class="w-full border rounded px-3 py-2 text-sm" required>
                 </div>
                 <div class="mb-4">
                     <label class="block mb-1 font-medium text-sm">PIC Perusahaan</label>
@@ -141,13 +145,13 @@
                     <label class="block mb-1 font-medium text-sm">No Penawaran</label>
                     <input type="text" name="no_penawaran" class="w-full border rounded px-3 py-2 text-sm" required>
                 </div>
+                <div class="absolute bottom-0 left-0 w-full p-4 bg-white border-t">
+                    <button type="submit"
+                        class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition w-full text-sm">
+                        Simpan
+                    </button>
+                </div>
             </form>
-            <div class="absolute bottom-0 left-0 w-full p-4 bg-white border-t">
-                <button type="submit" form="formPanel"
-                    class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition w-full text-sm">
-                    Simpan
-                </button>
-            </div>
         </div>
     </div>
 @endsection
