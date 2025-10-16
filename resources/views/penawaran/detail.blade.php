@@ -7,8 +7,8 @@
             max-height: 600px;
             overflow-y: auto;
         }
-        
-        .jexcel > thead > tr > td {
+
+        .jexcel>thead>tr>td {
             background-color: #4299e1 !important;
             color: white !important;
             font-weight: bold;
@@ -18,6 +18,7 @@
         .template-puterako .jexcel tbody tr td:nth-child(2) {
             color: blue;
         }
+
         .template-puterako .jexcel tbody tr td:nth-child(3) {
             color: purple;
         }
@@ -84,6 +85,12 @@
                                         <option value="bq">Template BQ</option>
                                     </select>
                                 </div>
+                                <div class="flex items-center">
+                                    <label class="block text-sm font-semibold mr-2">Profit (%)</label>
+                                    <input type="number" id="profitInput" class="border rounded px-3 py-2 bg-white w-24"
+                                        min="0" step="0.1" placeholder="30">
+                                    <span class="ml-1 text-sm text-gray-600">%</span>
+                                </div>
                             </div>
                             <button id="saveAllBtn"
                                 class="bg-green-500 text-white px-6 py-2 rounded hover:bg-green-700 transition text-sm font-semibold shadow-md">
@@ -135,6 +142,14 @@
             let sections = [];
             let sectionCounter = 0;
 
+            function parseNumber(value) {
+                if (typeof value === "string") {
+                    // Hilangkan koma, titik ribuan, dan spasi
+                    value = value.replace(/,/g, "").replace(/\./g, "");
+                }
+                return parseFloat(value) || 0;
+            }
+
             // Fungsi untuk membuat section baru
             function createSection() {
                 sectionCounter++;
@@ -143,40 +158,40 @@
 
                 // Buat HTML untuk section
                 const sectionHTML = `
-                    <div class="section-card p-4 mb-6 bg-white" id="${sectionId}">
-                        <div class="flex justify-between items-center mb-4">
-                            <div class="flex items-center gap-4">
-                                <h3 class="text-lg font-bold text-gray-700">Section ${sectionCounter}</h3>
-                                <div class="flex items-center">
-                                    <label class="block text-sm font-semibold mr-2">Area Pemasangan:</label>
-                                    <select class="area-select border rounded px-3 py-1 bg-white">
-                                        <option value="">-- Pilih Area --</option>
-                                        <option value="kantor">Kantor</option>
-                                        <option value="warehouse">Warehouse</option>
-                                        <option value="gudang">Gudang</option>
-                                        <option value="workshop">Workshop</option>
-                                        <option value="ruang_meeting">Ruang Meeting</option>
-                                        <option value="parkiran">Parkiran</option>
-                                        <option value="lobby">Lobby</option>
-                                        <option value="lain-lain">Lain-lain</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="flex gap-2">
-                                <button class="add-row-btn bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-700 transition text-sm">
-                                    + Tambah Baris
-                                </button>
-                                <button class="delete-row-btn bg-red-500 text-white px-3 py-1 rounded hover:bg-red-700 transition text-sm">
-                                    🗑️ Hapus Baris
-                                </button>
-                                <button class="delete-section-btn bg-gray-500 text-white px-3 py-1 rounded hover:bg-gray-700 transition text-sm">
-                                    ❌ Hapus Section
-                                </button>
-                            </div>
+            <div class="section-card p-4 mb-6 bg-white" id="${sectionId}">
+                <div class="flex justify-between items-center mb-4">
+                    <div class="flex items-center gap-4">
+                        <h3 class="text-lg font-bold text-gray-700">Section ${sectionCounter}</h3>
+                        <div class="flex items-center">
+                            <label class="block text-sm font-semibold mr-2">Area Pemasangan:</label>
+                            <select class="area-select border rounded px-3 py-1 bg-white">
+                                <option value="">-- Pilih Area --</option>
+                                <option value="kantor">Kantor</option>
+                                <option value="warehouse">Warehouse</option>
+                                <option value="gudang">Gudang</option>
+                                <option value="workshop">Workshop</option>
+                                <option value="ruang_meeting">Ruang Meeting</option>
+                                <option value="parkiran">Parkiran</option>
+                                <option value="lobby">Lobby</option>
+                                <option value="lain-lain">Lain-lain</option>
+                            </select>
                         </div>
-                        <div id="${spreadsheetId}"></div>
                     </div>
-                `;
+                    <div class="flex gap-2">
+                        <button class="add-row-btn bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-700 transition text-sm">
+                            + Tambah Baris
+                        </button>
+                        <button class="delete-row-btn bg-red-500 text-white px-3 py-1 rounded hover:bg-red-700 transition text-sm">
+                            🗑️ Hapus Baris
+                        </button>
+                        <button class="delete-section-btn bg-gray-500 text-white px-3 py-1 rounded hover:bg-gray-700 transition text-sm">
+                            ❌ Hapus Section
+                        </button>
+                    </div>
+                </div>
+                <div id="${spreadsheetId}"></div>
+            </div>
+        `;
 
                 // Tambahkan ke container
                 document.getElementById('sectionsContainer').insertAdjacentHTML('beforeend', sectionHTML);
@@ -188,51 +203,51 @@
                         ['', '', '', 0, '', 0, 0, 0],
                         ['', '', '', 0, '', 0, 0, 0],
                     ],
-                    columns: [
-                        { 
-                            title: 'No', 
+                    columns: [{
+                            title: 'No',
                             width: 60,
                             type: 'text'
                         },
-                        { 
-                            title: 'Tipe', 
+                        {
+                            title: 'Tipe',
                             width: 150,
                             type: 'text'
                         },
-                        { 
-                            title: 'Deskripsi', 
+                        {
+                            title: 'Deskripsi',
                             width: 300,
                             type: 'text'
                         },
-                        { 
-                            title: 'QTY', 
+                        {
+                            title: 'QTY',
                             width: 100,
                             type: 'numeric',
                             mask: '#,##0',
                             decimal: '.'
                         },
-                        { 
-                            title: 'Satuan', 
+                        {
+                            title: 'Satuan',
                             width: 100,
                             type: 'text'
                         },
-                        { 
-                            title: 'Harga Satuan', 
-                            width: 150,
-                            type: 'numeric',
-                            mask: '#,##0',
-                            decimal: '.'
-                        },
-                        { 
-                            title: 'Harga Total', 
+                        {
+                            title: 'Harga Satuan',
                             width: 150,
                             type: 'numeric',
                             mask: '#,##0',
                             decimal: '.',
                             readOnly: true
                         },
-                        { 
-                            title: 'HPP', 
+                        {
+                            title: 'Harga Total',
+                            width: 150,
+                            type: 'numeric',
+                            mask: '#,##0',
+                            decimal: '.',
+                            readOnly: true
+                        },
+                        {
+                            title: 'HPP',
                             width: 100,
                             type: 'numeric',
                             mask: '#,##0',
@@ -248,30 +263,107 @@
                     tableOverflow: true,
                     tableWidth: '100%',
                     tableHeight: '400px',
-                    
-                    // Event saat cell berubah
-                    onchange: function(instance, cell, x, y, value) {
-                        // Hitung Harga Total jika QTY atau Harga Satuan berubah
-                        if (x == 3 || x == 5) { // kolom QTY (3) atau Harga Satuan (5)
-                            const data = spreadsheet.getData();
-                            const qty = parseFloat(data[y][3]) || 0;
-                            const harga = parseFloat(data[y][5]) || 0;
-                            const total = qty * harga;
-                            spreadsheet.setValueFromCoords(6, y, total, false);
-                        }
-                        
+
+                    // Event setelah perubahan selesai
+                    onafterchanges: function(instance, changes) {
+                        if (!changes || changes.length === 0) return;
+
+                        const profitPercent = parseNumber(document.getElementById('profitInput')
+                            .value) || 0;
+                        const profitMultiplier = 1 + (profitPercent / 100);
+
+                        changes.forEach(change => {
+                            const x = change.x;
+                            const y = change.y;
+                            const newValue = change.newValue;
+                            const currentData = spreadsheet.getData();
+
+                            // Jika HPP berubah (kolom 7)
+                            if (x == 7) {
+                                const hpp = parseNumber(newValue) || 0;
+                                const hargaSatuan = hpp * profitMultiplier;
+                                spreadsheet.setValueFromCoords(5, y, hargaSatuan, true);
+
+                                const qty = parseNumber(currentData[y][3]) || 0;
+                                const total = qty * hargaSatuan;
+                                spreadsheet.setValueFromCoords(6, y, total.toLocaleString(
+                                    "id-ID"), true);
+
+                            }
+
+                            // Jika QTY berubah (kolom 3)
+                            if (x == 3) {
+                                const qty = parseNumber(newValue) || 0;
+                                const hargaSatuan = parseNumber(currentData[y][5]) || 0;
+                                const total = qty * hargaSatuan;
+                                spreadsheet.setValueFromCoords(6, y, total.toLocaleString(
+                                    "id-ID"), true);
+
+                            }
+                        });
+
                         applyTemplateStyle(spreadsheetId);
                     },
-                    
+
+                    // Event saat cell berubah
+                    onchange: function(instance, cell, x, y, value) {
+                        // Dapatkan data saat ini
+                        const currentData = spreadsheet.getData();
+                        const profitPercent = parseNumber(document.getElementById('profitInput')
+                            .value) || 0;
+                        const profitMultiplier = 1 + (profitPercent / 100);
+
+                        console.log('Column changed:', x, 'Row:', y, 'Value:', value);
+
+                        // Hitung Harga Satuan dari HPP jika HPP berubah (kolom index 7)
+                        if (x == 7) {
+                            const hpp = parseNumber(value) || 0;
+                            const hargaSatuan = hpp * profitMultiplier;
+
+                            console.log('HPP:', hpp, 'Profit:', profitPercent, 'Harga Satuan:',
+                                hargaSatuan);
+
+                            // Set Harga Satuan
+                            spreadsheet.setValueFromCoords(5, y, hargaSatuan, true);
+
+                            // Hitung Harga Total
+                            const qty = parseNumber(currentData[y][3]) || 0;
+                            const total = qty * hargaSatuan;
+                            spreadsheet.setValueFromCoords(6, y, total.toLocaleString("id-ID"), true);
+
+                        }
+
+                        // Hitung Harga Total jika QTY berubah (kolom index 3)
+                        if (x == 3) {
+                            const qty = parseNumber(value) || 0;
+                            const hargaSatuan = parseNumber(currentData[y][5]) || 0;
+                            const total = qty * hargaSatuan;
+                            spreadsheet.setValueFromCoords(6, y, total.toLocaleString("id-ID"), true);
+
+                        }
+
+                        applyTemplateStyle(spreadsheetId);
+                    },
+
                     // Event setelah paste
                     onpaste: function(instance, data) {
                         setTimeout(function() {
                             const allData = spreadsheet.getData();
+                            const profitPercent = parseNumber(document.getElementById(
+                                'profitInput').value) || 0;
+                            const profitMultiplier = 1 + (profitPercent / 100);
+
                             allData.forEach((row, index) => {
-                                const qty = parseFloat(row[3]) || 0;
-                                const harga = parseFloat(row[5]) || 0;
-                                const total = qty * harga;
-                                spreadsheet.setValueFromCoords(6, index, total, false);
+                                const hpp = parseNumber(row[7]) || 0;
+                                const hargaSatuan = hpp * profitMultiplier;
+                                spreadsheet.setValueFromCoords(5, index, hargaSatuan,
+                                    true);
+
+                                const qty = parseNumber(row[3]) || 0;
+                                const total = qty * hargaSatuan;
+                                spreadsheet.setValueFromCoords(6, y, total
+                                    .toLocaleString("id-ID"), true);
+
                             });
                             applyTemplateStyle(spreadsheetId);
                         }, 100);
@@ -287,7 +379,7 @@
 
                 // Event listeners untuk button dalam section
                 const sectionElement = document.getElementById(sectionId);
-                
+
                 // Tambah baris
                 sectionElement.querySelector('.add-row-btn').addEventListener('click', function() {
                     spreadsheet.insertRow(1, false, true);
@@ -323,10 +415,10 @@
             function applyTemplateStyle(spreadsheetId) {
                 const template = document.getElementById('templateSelect').value;
                 const wrapper = document.getElementById(spreadsheetId);
-                
+
                 // Remove semua class template
                 wrapper.classList.remove('template-puterako', 'template-bq');
-                
+
                 // Add class sesuai template
                 wrapper.classList.add('template-' + template);
             }
@@ -335,6 +427,28 @@
             document.getElementById('templateSelect').addEventListener('change', function() {
                 sections.forEach(section => {
                     applyTemplateStyle(section.spreadsheetId);
+                });
+            });
+
+            // Event ketika profit berubah (recalculate semua harga)
+            document.getElementById('profitInput').addEventListener('input', function() {
+                const profitPercent = parseNumber(this.value) || 0;
+                const profitMultiplier = 1 + (profitPercent / 100);
+
+                sections.forEach(section => {
+                    const allData = section.spreadsheet.getData();
+                    allData.forEach((row, index) => {
+                        const hpp = parseNumber(row[7]) || 0;
+                        const qty = parseNumber(row[3]) || 0;
+
+                        const hargaSatuan = hpp * profitMultiplier;
+                        const total = qty * hargaSatuan;
+
+                        // Update Harga Satuan & Total di tabel
+                        section.spreadsheet.setValueFromCoords(5, index, hargaSatuan, true);
+                        section.spreadsheet.setValueFromCoords(6, index, total
+                            .toLocaleString("id-ID"), true);
+                    });
                 });
             });
 
@@ -355,18 +469,18 @@
                     const sectionElement = document.getElementById(section.id);
                     const areaSelect = sectionElement.querySelector('.area-select');
                     const rawData = section.spreadsheet.getData();
-                    
+
                     // Format data
                     const formattedData = rawData.map(row => {
                         return {
                             no: row[0] || '',
                             tipe: row[1] || '',
                             deskripsi: row[2] || '',
-                            qty: parseFloat(row[3]) || 0,
+                            qty: parseNumber(row[3]) || 0,
                             satuan: row[4] || '',
-                            harga_satuan: parseFloat(row[5]) || 0,
-                            harga_total: parseFloat(row[6]) || 0,
-                            hpp: parseFloat(row[7]) || 0
+                            harga_satuan: parseNumber(row[5]) || 0,
+                            harga_total: parseNumber(row[6]) || 0,
+                            hpp: parseNumber(row[7]) || 0
                         };
                     });
 
@@ -377,50 +491,53 @@
                 });
 
                 fetch("{{ route('penawaran.save') }}", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "X-CSRF-TOKEN": "{{ csrf_token() }}"
-                    },
-                    body: JSON.stringify({
-                        penawaran_id: {{ $penawaran->id ?? 'null' }},
-                        template: document.getElementById('templateSelect').value,
-                        sections: allSectionsData
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "X-CSRF-TOKEN": "{{ csrf_token() }}"
+                        },
+                        body: JSON.stringify({
+                            penawaran_id: {{ $penawaran->id ?? 'null' }},
+                            template: document.getElementById('templateSelect').value,
+                            profit: parseNumber(document.getElementById('profitInput').value) ||
+                                0,
+                            sections: allSectionsData
+                        })
                     })
-                })
-                .then(response => response.json())
-                .then(result => {
-                    btn.innerHTML = "✅ Tersimpan!";
-                    console.log('Data saved:', result);
-                    setTimeout(() => {
-                        btn.innerHTML = originalText;
-                        btn.disabled = false;
-                    }, 2000);
-                })
-                .catch(error => {
-                    console.error("Error:", error);
-                    btn.innerHTML = "❌ Gagal";
-                    alert('Gagal menyimpan data. Silakan coba lagi.');
-                    setTimeout(() => {
-                        btn.innerHTML = originalText;
-                        btn.disabled = false;
-                    }, 2000);
-                });
+                    .then(response => response.json())
+                    .then(result => {
+                        btn.innerHTML = "✅ Tersimpan!";
+                        console.log('Data saved:', result);
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                            btn.disabled = false;
+                        }, 2000);
+                    })
+                    .catch(error => {
+                        console.error("Error:", error);
+                        btn.innerHTML = "❌ Gagal";
+                        alert('Gagal menyimpan data. Silakan coba lagi.');
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                            btn.disabled = false;
+                        }, 2000);
+                    });
             });
 
             // Handle tab switching
             document.querySelectorAll('.tab-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const tabName = this.getAttribute('data-tab');
-                    
+
                     // Update button styles
                     document.querySelectorAll('.tab-btn').forEach(b => {
-                        b.classList.remove('text-blue-600', 'border-b-2', 'border-blue-600');
+                        b.classList.remove('text-blue-600', 'border-b-2',
+                            'border-blue-600');
                         b.classList.add('text-gray-600');
                     });
                     this.classList.remove('text-gray-600');
                     this.classList.add('text-blue-600', 'border-b-2', 'border-blue-600');
-                    
+
                     // Show/hide panels
                     document.querySelectorAll('.tab-panel').forEach(panel => {
                         if (panel.getAttribute('data-tab') === tabName) {
