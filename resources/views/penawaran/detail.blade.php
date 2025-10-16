@@ -497,7 +497,7 @@
                             "X-CSRF-TOKEN": "{{ csrf_token() }}"
                         },
                         body: JSON.stringify({
-                            penawaran_id: {{ $penawaran->id ?? 'null' }},
+                            penawaran_id: {{ $penawaran->id_penawaran }},
                             template: document.getElementById('templateSelect').value,
                             profit: parseNumber(document.getElementById('profitInput').value) ||
                                 0,
