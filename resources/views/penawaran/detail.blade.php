@@ -215,6 +215,8 @@
                     // Parameter ke-4 harus TRUE agar cell ter-render ulang
                     spreadsheet.setValueFromCoords(5, rowIndex, hargaSatuan, true);
                     spreadsheet.setValueFromCoords(6, rowIndex, total, true);
+                    updateSubtotal(sections.find(s => s.spreadsheet === spreadsheet));
+
 
                     console.log('✅ Updated - Harga Satuan:', hargaSatuan, 'Harga Total:', total);
                 }
@@ -253,6 +255,9 @@
                             // Parameter ke-4 harus TRUE agar cell ter-render
                             section.spreadsheet.setValueFromCoords(5, i, hargaSatuan, true);
                             section.spreadsheet.setValueFromCoords(6, i, total, true);
+                            updateSubtotal(sections.find(s => s.spreadsheet === spreadsheet));
+
+                            
                         });
                     });
 
@@ -322,39 +327,42 @@
                     ];
 
                     const sectionHTML = `
-        <div class="section-card p-4 mb-6 bg-white" id="${sectionId}">
-            <div class="flex justify-between items-center mb-4">
-                <div class="flex items-center gap-4">
-                    <h3 class="text-lg font-bold text-gray-700">Section ${sectionCounter}</h3>
-                    <div class="flex items-center">
-                        <label class="block text-sm font-semibold mr-2">Area Pemasangan:</label>
-                        <select class="area-select border rounded px-3 py-1 bg-white">
-                            <option value="">-- Pilih Area --</option>
-                            <option value="kantor">Kantor</option>
-                            <option value="warehouse">Warehouse</option>
-                            <option value="gudang">Gudang</option>
-                            <option value="workshop">Workshop</option>
-                            <option value="ruang_meeting">Ruang Meeting</option>
-                            <option value="parkiran">Parkiran</option>
-                            <option value="lobby">Lobby</option>
-                            <option value="lain-lain">Lain-lain</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="flex gap-2 items-center">
-                <button class="flex items-center add-row-btn bg-[#02ADB8] text-white px-3 py-1 rounded hover:bg-blue-700 transition text-sm">
-                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg> Tambah Baris
-                </button>
-                <button class="flex items-center delete-row-btn bg-red-500 text-white px-3 py-1 rounded hover:bg-red-700 transition text-sm">
-                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg> Hapus Baris
-                </button>
-                <button class="delete-section-btn bg-white text-gray-700 px-3 py-1 rounded hover:bg-gray-700 hover:text-white transition text-sm">
-                    ❌
-                </button>
-            </div>
-            </div>
-            <div id="${spreadsheetId}"></div>
-        </div>`;
+                    <div class="section-card p-4 mb-6 bg-white" id="${sectionId}">
+                        <div class="flex justify-between items-center mb-4">
+                            <div class="flex items-center gap-4">
+                                <h3 class="text-lg font-bold text-gray-700">Section ${sectionCounter}</h3>
+                                <div class="flex items-center">
+                                    <label class="block text-sm font-semibold mr-2">Area Pemasangan:</label>
+                                    <select class="area-select border rounded px-3 py-1 bg-white">
+                                        <option value="">-- Pilih Area --</option>
+                                        <option value="kantor">Kantor</option>
+                                        <option value="warehouse">Warehouse</option>
+                                        <option value="gudang">Gudang</option>
+                                        <option value="workshop">Workshop</option>
+                                        <option value="ruang_meeting">Ruang Meeting</option>
+                                        <option value="parkiran">Parkiran</option>
+                                        <option value="lobby">Lobby</option>
+                                        <option value="lain-lain">Lain-lain</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="flex gap-2 items-center">
+                            <button class="flex items-center add-row-btn bg-[#02ADB8] text-white px-3 py-1 rounded hover:bg-blue-700 transition text-sm">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg> Tambah Baris
+                            </button>
+                            <button class="flex items-center delete-row-btn bg-red-500 text-white px-3 py-1 rounded hover:bg-red-700 transition text-sm">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg> Hapus Baris
+                            </button>
+                            <button class="delete-section-btn bg-white text-gray-700 px-3 py-1 rounded hover:bg-gray-700 hover:text-white transition text-sm">
+                                ❌
+                            </button>
+                        </div>
+                        </div>
+                        <div id="${spreadsheetId}"></div>
+                        <div class="text-right mt-3 font-semibold text-gray-700">
+                            Subtotal: Rp <span id="${sectionId}-subtotal">0</span>
+                        </div>
+                    </div>`;
 
                     document.getElementById('sectionsContainer').insertAdjacentHTML('beforeend', sectionHTML);
 
@@ -451,7 +459,7 @@
                                     part = part.trim();
                                     if (part.includes('-')) {
                                         const [start, end] = part.split('-').map(n => parseInt(n
-                                        .trim()));
+                                            .trim()));
                                         for (let i = start; i <= end; i++) {
                                             rowsToDelete.push(i);
                                         }
@@ -471,7 +479,7 @@
 
                                 if (confirm(
                                         `Hapus ${validRows.length} baris: ${validRows.sort((a,b) => a-b).join(', ')}?`
-                                        )) {
+                                    )) {
                                     validRows.forEach(rowNum => {
                                         spreadsheet.deleteRow(rowNum - 1, 1);
                                     });
@@ -496,7 +504,24 @@
                     });
 
                     applyTemplateStyle(spreadsheetId);
+                    updateSubtotal({ id: sectionId, spreadsheet });
+
                 }
+
+                function updateSubtotal(section) {
+                    const data = section.spreadsheet.getData();
+                    let subtotal = 0;
+
+                    data.forEach(row => {
+                        subtotal += parseNumber(row[6]); // kolom Harga Total
+                    });
+
+                    const subtotalEl = document.getElementById(`${section.id}-subtotal`);
+                    if (subtotalEl) {
+                        subtotalEl.textContent = subtotal.toLocaleString('id-ID');
+                    }
+                }
+
 
                 function applyTemplateStyle(spreadsheetId) {
                     const template = document.getElementById('templateSelect').value;
