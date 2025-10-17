@@ -33,7 +33,28 @@ class PenawaranController extends Controller
     {
         $id = $request->query('id');
         $penawaran = \App\Models\Penawaran::find($id);
-        return view('penawaran.detail', compact('penawaran'));
+
+        $details = $penawaran ? $penawaran->details()->get() : collect();
+
+        $sections = $details->groupBy('area')->map(function ($items, $area) {
+            return [
+                'area' => $area,
+                'data' => $items->map(function ($d) {
+                    return [
+                        'no' => $d->no,
+                        'tipe' => $d->tipe,
+                        'deskripsi' => $d->deskripsi,
+                        'qty' => $d->qty,
+                        'satuan' => $d->satuan,
+                        'harga_satuan' => $d->harga_satuan,
+                        'harga_total' => $d->harga_total,
+                        'hpp' => $d->hpp
+                    ];
+                })->toArray()
+            ];
+        })->values()->toArray();
+
+        return view('penawaran.detail', compact('penawaran', 'sections'));
     }
 
     public function save(Request $request)
