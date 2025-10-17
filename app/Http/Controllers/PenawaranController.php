@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class PenawaranController extends Controller
 {
@@ -36,6 +37,8 @@ class PenawaranController extends Controller
 
         $details = $penawaran ? $penawaran->details()->get() : collect();
 
+        $profit = $details->first()->profit ?? 0;
+
         $sections = $details->groupBy('area')->map(function ($items, $area) {
             return [
                 'area' => $area,
@@ -48,19 +51,18 @@ class PenawaranController extends Controller
                         'satuan' => $d->satuan,
                         'harga_satuan' => $d->harga_satuan,
                         'harga_total' => $d->harga_total,
-                        'hpp' => $d->hpp
+                        'hpp' => $d->hpp,
                     ];
                 })->toArray()
             ];
         })->values()->toArray();
 
-        return view('penawaran.detail', compact('penawaran', 'sections'));
+        return view('penawaran.detail', compact('penawaran', 'sections', 'profit'));
     }
 
     public function save(Request $request)
     {
         $data = $request->all();
-
         $penawaranId = $data['penawaran_id'] ?? null;
         $sections = $data['sections'] ?? [];
         $profit = $data['profit'] ?? 0;
@@ -69,15 +71,20 @@ class PenawaranController extends Controller
             return response()->json(['error' => 'Penawaran ID tidak ditemukan'], 400);
         }
 
-        \App\Models\PenawaranDetail::where('id_penawaran', $penawaranId)->delete();
+        // Ambil semua detail lama
+        $existingDetails = \App\Models\PenawaranDetail::where('id_penawaran', $penawaranId)->get()->keyBy(function ($item) {
+            return $item->no . '|' . $item->area;
+        });
+
+        $newKeys = [];
 
         foreach ($sections as $section) {
             $area = $section['area'] ?? null;
             foreach ($section['data'] as $row) {
-                \App\Models\PenawaranDetail::create([
-                    'id_penawaran' => $penawaranId,
-                    'area' => $area,
-                    'no' => $row['no'] ?? null,
+                $key = ($row['no'] ?? '') . '|' . $area;
+                $newKeys[] = $key;
+
+                $values = [
                     'tipe' => $row['tipe'] ?? null,
                     'deskripsi' => $row['deskripsi'] ?? null,
                     'qty' => $row['qty'] ?? null,
@@ -86,9 +93,25 @@ class PenawaranController extends Controller
                     'harga_total' => $row['harga_total'] ?? null,
                     'hpp' => $row['hpp'] ?? null,
                     'profit' => $profit,
-                ]);
+                ];
+
+                // Update kalau sudah ada, kalau belum buat baru
+                if (isset($existingDetails[$key])) {
+                    $existingDetails[$key]->update($values);
+                } else {
+                    \App\Models\PenawaranDetail::create(array_merge($values, [
+                        'id_penawaran' => $penawaranId,
+                        'area' => $area,
+                        'no' => $row['no'] ?? null,
+                    ]));
+                }
             }
         }
+
+        // Hapus data yang tidak ada lagi di input
+        \App\Models\PenawaranDetail::where('id_penawaran', $penawaranId)
+            ->whereNotIn(DB::raw("CONCAT(no, '|', area)"), $newKeys)
+            ->delete();
 
         return response()->json(['success' => true]);
     }
