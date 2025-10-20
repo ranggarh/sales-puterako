@@ -257,7 +257,7 @@
                             section.spreadsheet.setValueFromCoords(6, i, total, true);
                             updateSubtotal(sections.find(s => s.spreadsheet === spreadsheet));
 
-                            
+
                         });
                     });
 
@@ -331,19 +331,10 @@
                         <div class="flex justify-between items-center mb-4">
                             <div class="flex items-center gap-4">
                                 <h3 class="text-lg font-bold text-gray-700">Section ${sectionCounter}</h3>
+                                <input type="text" class="nama-section-input border rounded px-3 py-1 ml-2" placeholder="Ex: Main Unit" value="${sectionData && sectionData.nama_section ? sectionData.nama_section : ''}">
                                 <div class="flex items-center">
                                     <label class="block text-sm font-semibold mr-2">Area Pemasangan:</label>
-                                    <select class="area-select border rounded px-3 py-1 bg-white">
-                                        <option value="">-- Pilih Area --</option>
-                                        <option value="kantor">Kantor</option>
-                                        <option value="warehouse">Warehouse</option>
-                                        <option value="gudang">Gudang</option>
-                                        <option value="workshop">Workshop</option>
-                                        <option value="ruang_meeting">Ruang Meeting</option>
-                                        <option value="parkiran">Parkiran</option>
-                                        <option value="lobby">Lobby</option>
-                                        <option value="lain-lain">Lain-lain</option>
-                                    </select>
+                                    <input type="text" class="area-select border rounded px-3 py-1 ml-2" placeholder="Ex: Kantor" value="${sectionData && sectionData.area ? sectionData.area : ''}">
                                 </div>
                             </div>
                             <div class="flex gap-2 items-center">
@@ -504,7 +495,10 @@
                     });
 
                     applyTemplateStyle(spreadsheetId);
-                    updateSubtotal({ id: sectionId, spreadsheet });
+                    updateSubtotal({
+                        id: sectionId,
+                        spreadsheet
+                    });
 
                 }
 
@@ -561,10 +555,12 @@
                     const allSectionsData = sections.map(section => {
                         const sectionElement = document.getElementById(section.id);
                         const areaSelect = sectionElement.querySelector('.area-select');
+                        const namaSectionInput = sectionElement.querySelector('.nama-section-input');
                         const rawData = section.spreadsheet.getData();
 
                         return {
                             area: areaSelect.value,
+                            nama_section: namaSectionInput.value,
                             data: rawData.map(row => ({
                                 no: row[0],
                                 tipe: row[1],

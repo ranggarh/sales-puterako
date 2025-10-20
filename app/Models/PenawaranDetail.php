@@ -10,6 +10,7 @@ class PenawaranDetail extends Model
     protected $fillable = [
         'id_penawaran',
         'area',
+        'nama_section',
         'no',
         'tipe',
         'deskripsi',

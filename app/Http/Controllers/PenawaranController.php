@@ -39,9 +39,13 @@ class PenawaranController extends Controller
 
         $profit = $details->first()->profit ?? 0;
 
-        $sections = $details->groupBy('area')->map(function ($items, $area) {
+        $sections = $details->groupBy(function ($item) {
+            return $item->area . '|' . $item->nama_section;
+        })->map(function ($items, $key) {
+            [$area, $nama_section] = explode('|', $key);
             return [
                 'area' => $area,
+                'nama_section' => $nama_section,
                 'data' => $items->map(function ($d) {
                     return [
                         'no' => $d->no,
@@ -80,6 +84,7 @@ class PenawaranController extends Controller
 
         foreach ($sections as $section) {
             $area = $section['area'] ?? null;
+            $namaSection = $section['nama_section'] ?? null;
             foreach ($section['data'] as $row) {
                 $key = ($row['no'] ?? '') . '|' . $area;
                 $newKeys[] = $key;
@@ -93,6 +98,7 @@ class PenawaranController extends Controller
                     'harga_total' => $row['harga_total'] ?? null,
                     'hpp' => $row['hpp'] ?? null,
                     'profit' => $profit,
+                    'nama_section' => $namaSection,
                 ];
 
                 // Update kalau sudah ada, kalau belum buat baru

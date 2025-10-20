@@ -12,6 +12,7 @@ class CreatePenawaranDetailsTable extends Migration
             $table->id('id_penawaran_detail');
             $table->unsignedBigInteger('id_penawaran');
             $table->string('area')->nullable();
+            $table->string('nama_section')->nullable();
             $table->string('no')->nullable();
             $table->string('tipe')->nullable();
             $table->text('deskripsi')->nullable();
