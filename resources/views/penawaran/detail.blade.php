@@ -41,6 +41,15 @@
         }
     </style>
 
+    <div class="flex items-center p-8 text-gray-600 -mb-8">
+        <a href="{{ route('penawaran.list') }}" class="flex items-center hover:text-blue-600">
+            <x-lucide-arrow-left class="w-5 h-5 mr-2" />
+            List Penawaran
+        </a>
+        <span class="mx-2">/</span>
+        <span class="font-semibold">Detail Penawaran</span>
+    </div>
+
     <div class="container mx-auto p-8">
         <div class="bg-white shadow rounded-lg p-6 mb-6">
             <h2 class="text-xl font-bold mb-4">Detail Penawaran</h2>
