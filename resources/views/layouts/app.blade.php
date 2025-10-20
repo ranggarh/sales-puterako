@@ -120,18 +120,7 @@
             padding-left: 3.5rem;
         }
 
-        .submenu-item::before {
-            content: '';
-            position: absolute;
-            left: 2rem;
-            top: 50%;
-            width: 0.5rem;
-            height: 0.5rem;
-            border-radius: 50%;
-            background: #9CA3AF;
-            transform: translateY(-50%);
-            transition: all 0.2s;
-        }
+        
 
         .submenu-item:hover::before,
         .submenu-item.active::before {
@@ -286,14 +275,17 @@
                                 <div class="space-y-1 py-2">
                                     <a href="{{ route('penawaran.list') }}"
                                         class="submenu-item block py-2 rounded-lg hover:bg-gray-50 transition-colors">
+                                        <x-lucide-scroll-text class="w-4 h-4 inline-block mr-2 text-gray-600" />
                                         <span class="menu-label show text-sm text-gray-700">List Penawaran</span>
                                     </a>
                                     <a href="{{ route('penawaran.followup') }}"
                                         class="submenu-item block py-2 rounded-lg hover:bg-gray-50 transition-colors">
+                                        <x-lucide-phone-call class="w-4 h-4 inline-block mr-2 text-gray-600" />
                                         <span class="menu-label show text-sm text-gray-700">Follow Up</span>
                                     </a>
                                     <a href="{{ route('penawaran.rekap-survey') }}"
                                         class="submenu-item block py-2 rounded-lg hover:bg-gray-50 transition-colors">
+                                        <x-lucide-files class="w-4 h-4 inline-block mr-2 text-gray-600" />
                                         <span class="menu-label show text-sm text-gray-700">Rekap Survey</span>
                                     </a>
                                 </div>

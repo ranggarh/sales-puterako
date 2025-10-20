@@ -18,15 +18,15 @@
         <div class="flex justify-between items-center mb-6">
             <h1 class="text-xl font-bold">List Penawaran</h1>
             <button id="btnTambah"
-                class="bg-blue-600 text-white px-4 py-2 rounded flex items-center gap-2 text-sm hover:bg-blue-700 transition">
-
+                class="bg-green-500  text-white px-4 py-2 rounded flex items-center gap-2 text-sm hover:bg-green-700 transition">
+                <x-lucide-plus class="w-5 h-5 inline" />
                 Tambah
             </button>
         </div>
         <div class="bg-white shadow rounded-lg">
             <table class="min-w-full text-sm">
                 <thead>
-                    <tr class="bg-blue-100 text-gray-700">
+                    <tr class="bg-green-100 text-gray-800">
                         <th class="px-2 py-2 font-semibold text-center">ID</th>
                         <th class="px-2 py-2 font-semibold text-center">No Penawaran</th>
                         <th class="px-2 py-2 font-semibold text-center">Perihal</th>
@@ -38,7 +38,7 @@
                 </thead>
                 <tbody>
                     @forelse($penawarans as $p)
-                        <tr class="border-b hover:bg-blue-50 transition">
+                        <tr class="border-b transition">
                             <td class="px-2 py-2 text-center">{{ $p->id_penawaran }}</td>
                             <td class="px-2 py-2 text-center">{{ $p->no_penawaran }}</td>
                             <td class="px-2 py-2">{{ $p->perihal }}</td>
@@ -64,7 +64,7 @@
                                         </button>
                                     @else
                                         <a href="{{ route('penawaran.show', ['id' => $p->id_penawaran]) }}"
-                                            class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-700 transition"
+                                            class="bg-blue-500 text-white px-2 py-2 rounded hover:bg-blue-700 transition"
                                             title="Lihat Detail">
                                             <x-lucide-file-text class="w-5 h-5 inline" />
                                         </a>

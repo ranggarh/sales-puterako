@@ -75,9 +75,9 @@
 
         <div class="bg-white shadow rounded-lg p-6">
             <div class="flex border-b mb-4">
-                <button class="tab-btn px-4 py-2 font-semibold text-blue-600 border-b-2 border-blue-600 focus:outline-none"
+                <button class="tab-btn px-4 py-2 font-semibold text-green-600 border-b-2 border-green-600 focus:outline-none"
                     data-tab="penawaran">Penawaran</button>
-                <button class="tab-btn px-4 py-2 font-semibold text-gray-600 hover:text-blue-600 focus:outline-none"
+                <button class="tab-btn px-4 py-2 font-semibold text-gray-600 hover:text-green-600 focus:outline-none"
                     data-tab="jasa">Jasa</button>
             </div>
 
