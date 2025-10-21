@@ -150,7 +150,7 @@
                         </div>
                         <div class="flex-1 flex justify-end items-end gap-2 mb-4">
                             <button id="jasaAddSectionBtn"
-                                class="bg-[#02ADB8] text-white px-4 py-2 rounded hover:bg-blue-700 transition text-sm font-semibold shadow-md">
+                                class="bg-[#02ADB8] text-white px-4 py-2 rounded hover:bg-blue-700 transition text-sm font-semibold shadow-md hidden">
                                 Tambah Section Jasa
                             </button>
                             <button id="jasaEditModeBtn"
@@ -350,21 +350,17 @@
 
                     document.getElementById('jasaProfitInput').disabled = !enable;
                     document.getElementById('jasaPphInput').disabled = !enable;
-                    // Cek tombol add section jasa, jika ada
-                    const addSectionBtn = document.getElementById('jasaAddSectionBtn');
-                    if (addSectionBtn) addSectionBtn.disabled = !enable;
+
+                    // Tampilkan tombol tambah section jasa hanya saat edit
+                    document.getElementById('jasaAddSectionBtn').classList.toggle('hidden', !enable);
 
                     jasaSections.forEach(section => {
-                        // Hapus pemanggilan setEditable karena tidak ada di jspreadsheet v4
-                        // section.spreadsheet.setEditable(enable); <-- HAPUS INI
-
                         const sectionElement = document.getElementById(section.id);
                         const spreadsheetWrapper = document.getElementById(section.spreadsheetId);
                         const namaSectionInput = sectionElement.querySelector('.nama-section-input');
                         const addRowBtn = sectionElement.querySelector('.add-row-btn');
                         const deleteSectionBtn = sectionElement.querySelector('.delete-section-btn');
 
-                        // Gunakan CSS untuk mematikan interaksi
                         if (enable) {
                             spreadsheetWrapper.classList.remove('spreadsheet-disabled');
                             section.spreadsheet.options.editable = true;
