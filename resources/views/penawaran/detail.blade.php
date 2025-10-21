@@ -163,7 +163,7 @@
                             <input type="number" id="jasaPphInput" class="border rounded px-3 py-2 bg-white w-24"
                                 min="0" step="0.1" value="0">
                         </div>
-                        <div class="flex gap-2 mb-4">
+                        <div class="flex-1 flex justify-end items-end gap-2 mb-4">
                             <button id="jasaEditModeBtn"
                                 class="flex items-center bg-[#FFA500] text-white px-3 py-2 rounded hover:bg-orange-600 transition text-sm font-semibold shadow-md">
                                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -313,7 +313,7 @@
                                 toggleJasaEditMode(false);
                                 document.getElementById('jasaEditModeBtn').classList.remove('hidden');
                                 document.getElementById('jasaCancelEditBtn').classList.add('hidden');
-                                document.getElementById('jasaSaveAllBtn').classList.add('hidden');
+                                
                                 console.log('🔒 Mode: VIEW (jasa data exists)');
                             } else {
                                 createJasaSection(null, true);
@@ -321,7 +321,7 @@
                                 toggleJasaEditMode(true);
                                 document.getElementById('jasaEditModeBtn').classList.add('hidden');
                                 document.getElementById('jasaCancelEditBtn').classList.remove('hidden');
-                                document.getElementById('jasaSaveAllBtn').classList.remove('hidden');
+        
                                 console.log('✏️ Mode: EDIT (new jasa data)');
                             }
                         })
@@ -374,10 +374,10 @@
                         // Gunakan CSS untuk mematikan interaksi
                         if (enable) {
                             spreadsheetWrapper.classList.remove('spreadsheet-disabled');
-                            section.spreadsheet.options.editable = true; 
+                            section.spreadsheet.options.editable = true;
                         } else {
                             spreadsheetWrapper.classList.add('spreadsheet-disabled');
-                            section.spreadsheet.options.editable = false; 
+                            section.spreadsheet.options.editable = false;
                         }
 
                         namaSectionInput.disabled = !enable;
@@ -473,10 +473,12 @@
                 </div>
                 <div class="flex gap-2">
                     <button class="add-row-btn bg-[#02ADB8] text-white px-3 py-1 rounded hover:bg-blue-700 transition text-sm">
-                        ➕ Tambah Baris
+                        <x-lucide-plus class="w-4 h-4 inline-block mr-1" />
+                         Tambah Baris
                     </button>
                     <button class="delete-section-btn bg-red-500 text-white px-3 py-1 rounded hover:bg-red-700 transition text-sm">
-                        🗑️ Hapus Section
+                        <x-lucide-trash class="w-4 h-4 inline-block mr-1" />
+                         Hapus Section
                     </button>
                 </div>
             </div>
