@@ -271,6 +271,8 @@
                 // FUNGSI JASA
                 // =====================================================
 
+                // Paste kode ini ke dalam tag <script> di bagian FUNGSI JASA
+
                 function loadJasaData() {
                     const penawaranId = {{ $penawaran->id_penawaran }};
 
@@ -368,11 +370,11 @@
                         row.vol || 0,
                         row.hari || 0,
                         row.orang || 0,
-                        row.unit || '',
+                        row.unit || 0,
                         row.total || 0,
                     ]) : [
-                        ['', '', 0, 0, 0, '', 0],
-                        ['', '', 0, 0, 0, '', 0],
+                        ['', '', 0, 0, 0, 0, 0],
+                        ['', '', 0, 0, 0, 0, 0],
                     ];
 
                     const sectionHTML = `
@@ -428,7 +430,8 @@
                             },
                             {
                                 title: 'Unit',
-                                width: 100
+                                width: 100,
+                                type: 'numeric'
                             },
                             {
                                 title: 'Total',
@@ -442,11 +445,15 @@
                         tableHeight: '350px',
                         editable: jasaIsEditMode,
                         onchange: function(instance, cell, col, row, value) {
+                            // Trigger recalc jika Vol, Hari, Orang, atau Unit berubah
                             if ([2, 3, 4, 5].includes(col)) {
                                 console.log('📝 Jasa cell changed:', {
                                     col,
                                     row,
-                                    value
+                                    value,
+                                    columnName: ['No', 'Deskripsi', 'Vol', 'Hari', 'Orang', 'Unit',
+                                        'Total'
+                                    ][col]
                                 });
                                 recalcJasaRow(spreadsheet, row);
                             }
@@ -477,31 +484,43 @@
                         spreadsheet: spreadsheet
                     });
 
-                    // Update subtotal
-                    updateJasaSubtotal({
-                        id: sectionId,
-                        spreadsheet: spreadsheet
+                    // PENTING: Kalkulasi semua row setelah spreadsheet dibuat
+                    console.log(`🔄 Initial calculation for ${sectionId}, rows: ${initialData.length}`);
+                    initialData.forEach((row, i) => {
+                        recalcJasaRow(spreadsheet, i);
                     });
 
                     console.log('✅ Jasa section created successfully. Total sections:', jasaSections.length);
                 }
 
+                // BAGIAN FUNGSI JASA - Replace bagian ini di file Anda
+
                 function recalcJasaRow(spreadsheet, rowIndex) {
+                    // Ambil data fresh dari spreadsheet
                     const row = spreadsheet.getRowData(rowIndex);
+
                     const vol = parseNumber(row[2]);
                     const hari = parseNumber(row[3]);
                     const orang = parseNumber(row[4]);
-                    const unitStr = row[5]; // Unit adalah string (ex: "50000")
-                    const unit = parseNumber(unitStr);
+                    const unit = parseNumber(row[5]);
 
                     console.log('🧮 recalcJasaRow:', {
                         rowIndex,
                         vol,
                         hari,
                         orang,
-                        unitStr,
-                        unit
+                        unit,
+                        rawRow: row
                     });
+
+                    // Jika unit kosong atau 0, total = 0
+                    if (!unit || unit === 0) {
+                        console.log('⚠️ Unit is 0 or empty, setting total to 0');
+                        spreadsheet.setValueFromCoords(6, rowIndex, 0, true);
+                        const section = jasaSections.find(s => s.spreadsheet === spreadsheet);
+                        if (section) updateJasaSubtotal(section);
+                        return;
+                    }
 
                     let total = unit; // Mulai dari nilai unit
 
@@ -510,8 +529,16 @@
                     if (hari > 0) total *= hari;
                     if (orang > 0) total *= orang;
 
-                    console.log('💰 Calculated total:', total);
+                    console.log('💰 Calculated total:', {
+                        unit,
+                        vol,
+                        hari,
+                        orang,
+                        formula: `${unit}${vol > 0 ? ' × ' + vol : ''}${hari > 0 ? ' × ' + hari : ''}${orang > 0 ? ' × ' + orang : ''}`,
+                        result: total
+                    });
 
+                    // Set value dengan force render
                     spreadsheet.setValueFromCoords(6, rowIndex, total, true);
 
                     // Update subtotal untuk section ini
@@ -521,41 +548,197 @@
                     }
                 }
 
+                function createJasaSection(sectionData = null) {
+                    jasaSectionCounter++;
+                    const sectionId = 'jasa-section-' + jasaSectionCounter;
+                    const spreadsheetId = 'jasa-spreadsheet-' + jasaSectionCounter;
+
+                    console.log(`🏗️ Creating jasa section: ${sectionId}`, {
+                        hasData: !!sectionData,
+                        counter: jasaSectionCounter
+                    });
+
+                    const initialData = sectionData ? sectionData.data.map(row => [
+                        row.no || '',
+                        row.deskripsi || '',
+                        row.vol || 0,
+                        row.hari || 0,
+                        row.orang || 0,
+                        row.unit || 0,
+                        0, // Total akan dihitung ulang
+                    ]) : [
+                        ['', '', 0, 0, 0, 0, 0],
+                        ['', '', 0, 0, 0, 0, 0],
+                    ];
+
+                    const sectionHTML = `
+        <div class="section-card p-4 mb-6 bg-white" id="${sectionId}">
+            <div class="flex justify-between items-center mb-3">
+                <div class="flex items-center gap-4">
+                    <h3 class="text-lg font-bold text-gray-700">Section Jasa ${jasaSectionCounter}</h3>
+                    <input type="text" class="nama-section-input border rounded px-3 py-1" 
+                        placeholder="Ex: Pekerjaan Instalasi" 
+                        value="${sectionData && sectionData.nama_section ? sectionData.nama_section : ''}">
+                </div>
+                <div class="flex gap-2">
+                    <button class="add-row-btn bg-[#02ADB8] text-white px-3 py-1 rounded hover:bg-blue-700 transition text-sm">
+                        ➕ Tambah Baris
+                    </button>
+                    <button class="delete-section-btn bg-red-500 text-white px-3 py-1 rounded hover:bg-red-700 transition text-sm">
+                        🗑️ Hapus Section
+                    </button>
+                </div>
+            </div>
+            <div id="${spreadsheetId}"></div>
+            <div class="text-right mt-3 font-semibold text-gray-700">
+                Subtotal: Rp <span id="${sectionId}-subtotal">0</span>
+            </div>
+        </div>`;
+
+                    document.getElementById('jasaSectionsContainer').insertAdjacentHTML('beforeend', sectionHTML);
+
+                    const spreadsheet = jspreadsheet(document.getElementById(spreadsheetId), {
+                        data: initialData,
+                        columns: [{
+                                title: 'No',
+                                width: 60
+                            },
+                            {
+                                title: 'Deskripsi',
+                                width: 250
+                            },
+                            {
+                                title: 'Vol',
+                                width: 80,
+                                type: 'numeric'
+                            },
+                            {
+                                title: 'Hari',
+                                width: 80,
+                                type: 'numeric'
+                            },
+                            {
+                                title: 'Orang',
+                                width: 80,
+                                type: 'numeric'
+                            },
+                            {
+                                title: 'Unit',
+                                width: 100,
+                                type: 'numeric'
+                            },
+                            {
+                                title: 'Total',
+                                width: 120,
+                                type: 'numeric',
+                                readOnly: true
+                            },
+                        ],
+                        tableOverflow: true,
+                        tableWidth: '100%',
+                        tableHeight: '350px',
+                        editable: jasaIsEditMode,
+                        onchange: function(instance, cell, col, row, value) {
+                            console.log('🔔 onchange triggered:', {
+                                col,
+                                row,
+                                value
+                            });
+
+                            // Trigger recalc jika Vol, Hari, Orang, atau Unit berubah
+                            if (col >= 2 && col <= 5) {
+                                console.log('📝 Recalculating row:', row);
+
+                                // Delay sedikit untuk memastikan value sudah tersimpan
+                                setTimeout(() => {
+                                    recalcJasaRow(spreadsheet, row);
+                                }, 50);
+                            }
+                        },
+                        onafterchanges: function(instance, records) {
+                            console.log('🔔 onafterchanges triggered:', records);
+
+                            // Untuk paste multiple cells
+                            const rowsToRecalc = new Set();
+                            records.forEach(record => {
+                                const col = record.x;
+                                const row = record.y;
+                                if (col >= 2 && col <= 5) {
+                                    rowsToRecalc.add(row);
+                                }
+                            });
+
+                            // Recalculate unique rows
+                            rowsToRecalc.forEach(row => {
+                                setTimeout(() => {
+                                    recalcJasaRow(spreadsheet, row);
+                                }, 50);
+                            });
+                        }
+                    });
+
+                    const sectionElement = document.getElementById(sectionId);
+
+                    // Event listener tambah baris
+                    sectionElement.querySelector('.add-row-btn').addEventListener('click', () => {
+                        spreadsheet.insertRow();
+                        console.log('➕ Row added to jasa section:', sectionId);
+                    });
+
+                    // Event listener hapus section
+                    sectionElement.querySelector('.delete-section-btn').addEventListener('click', () => {
+                        if (confirm('Yakin ingin menghapus section jasa ini?')) {
+                            jasaSections = jasaSections.filter(s => s.id !== sectionId);
+                            sectionElement.remove();
+                            console.log('🗑️ Jasa section deleted:', sectionId);
+                        }
+                    });
+
+                    // Simpan ke array
+                    jasaSections.push({
+                        id: sectionId,
+                        spreadsheetId: spreadsheetId,
+                        spreadsheet: spreadsheet
+                    });
+
+                    // PENTING: Kalkulasi semua row setelah spreadsheet dibuat
+                    console.log(`🔄 Running initial calculation for ${sectionId}`);
+
+                    // Gunakan setTimeout untuk memastikan spreadsheet sudah fully rendered
+                    setTimeout(() => {
+                        const totalRows = spreadsheet.getData().length;
+                        console.log(`   Calculating ${totalRows} rows...`);
+
+                        for (let i = 0; i < totalRows; i++) {
+                            recalcJasaRow(spreadsheet, i);
+                        }
+
+                        console.log('✅ Initial calculation completed');
+                    }, 100);
+
+                    console.log('✅ Jasa section created. Total sections:', jasaSections.length);
+                }
+
                 function updateJasaSubtotal(section) {
                     const data = section.spreadsheet.getData();
                     let subtotal = 0;
 
                     data.forEach(row => {
-                        subtotal += parseNumber(row[6]);
+                        const total = parseNumber(row[6]);
+                        subtotal += total;
+                        console.log('   Row total:', total, 'Running subtotal:', subtotal);
                     });
 
                     const subtotalEl = document.getElementById(`${section.id}-subtotal`);
                     if (subtotalEl) {
                         subtotalEl.textContent = subtotal.toLocaleString('id-ID');
+                        console.log('💰 Subtotal updated:', subtotal);
                     }
                 }
 
-                // =====================================================
-                // EVENT LISTENERS JASA
-                // =====================================================
-
-                // Tombol tambah section jasa
-                document.getElementById('jasaAddSectionBtn').addEventListener('click', () => {
-                    if (jasaIsEditMode) {
-                        createJasaSection();
-                        console.log('➕ New jasa section added');
-                    }
-                });
-
-                // Input profit jasa - recalculate all
+                // Input profit jasa - hanya untuk informasi, tidak mempengaruhi perhitungan
                 document.getElementById('jasaProfitInput').addEventListener('input', function() {
-                    console.log('💰 Jasa profit changed to:', this.value);
-                    jasaSections.forEach(section => {
-                        const data = section.spreadsheet.getData();
-                        data.forEach((row, i) => {
-                            recalcJasaRow(section.spreadsheet, i);
-                        });
-                    });
+                    console.log('💰 Jasa profit changed to:', this.value, '(info only)');
                 });
 
                 // Tombol simpan jasa
@@ -577,7 +760,7 @@
                                 vol: parseNumber(row[2]),
                                 hari: parseNumber(row[3]),
                                 orang: parseNumber(row[4]),
-                                unit: row[5],
+                                unit: parseNumber(row[5]),
                                 total: parseNumber(row[6]),
                             }))
                         };
