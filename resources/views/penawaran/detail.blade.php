@@ -14,20 +14,6 @@
             text-align: start;
         }
 
-        /* Style untuk template Puterako */
-        .template-puterako .jexcel tbody tr td:nth-child(2) {
-            color: rgb(0, 255, 72);
-        }
-
-        .template-puterako .jexcel tbody tr td:nth-child(3) {
-            color: purple;
-        }
-
-        /* Style untuk template BQ */
-        .template-bq .jexcel tbody tr td {
-            color: black;
-        }
-
         .section-card {
             border: 1px solid #e2e8f0;
             border-radius: 8px;
@@ -96,13 +82,7 @@
                     <div class="p-2 rounded-lg mb-6">
                         <div class="flex justify-between items-center">
                             <div class="flex items-center gap-4">
-                                <div class="flex items-center">
-                                    <label class="block text-sm font-semibold mr-2">Pilih Template</label>
-                                    <select id="templateSelect" class="border rounded px-3 py-2 bg-white">
-                                        <option value="puterako">Template Puterako</option>
-                                        <option value="bq">Template BQ</option>
-                                    </select>
-                                </div>
+                                
                                 <div class="flex items-center">
                                     <label class="block text-sm font-semibold mr-2">Profit (%)</label>
                                     <input type="number" id="profitInput" class="border rounded px-3 py-2 bg-white w-24"
@@ -1039,20 +1019,9 @@
                     }
                 }
 
-                function applyTemplateStyle(spreadsheetId) {
-                    const template = document.getElementById('templateSelect').value;
-                    const wrapper = document.getElementById(spreadsheetId);
-                    wrapper.classList.remove('template-puterako', 'template-bq');
-                    wrapper.classList.add('template-' + template);
-                }
-
                 // =====================================================
                 // EVENT LISTENERS PENAWARAN
                 // =====================================================
-
-                document.getElementById('templateSelect').addEventListener('change', () => {
-                    sections.forEach(sec => applyTemplateStyle(sec.spreadsheetId));
-                });
 
                 document.getElementById('profitInput').addEventListener('input', function() {
                     console.log('💰 Profit input changed to:', this.value);
