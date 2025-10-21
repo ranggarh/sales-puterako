@@ -21,4 +21,8 @@ class Penawaran extends Model
     {
         return $this->hasMany(PenawaranDetail::class, 'id_penawaran');
     }
+    public function jasaDetails()
+{
+    return $this->hasMany(JasaDetail::class, 'id_penawaran');
+}
 }
