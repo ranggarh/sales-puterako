@@ -163,14 +163,30 @@
                             <input type="number" id="jasaPphInput" class="border rounded px-3 py-2 bg-white w-24"
                                 min="0" step="0.1" value="0">
                         </div>
-                        <button id="jasaAddSectionBtn"
-                            class="bg-[#02ADB8] text-white px-4 py-2 rounded hover:bg-blue-700 transition text-sm font-semibold shadow-md">
-                            Tambah Section Jasa
-                        </button>
-                        <button id="jasaSaveAllBtn"
-                            class="bg-[#67BC4B] text-white px-6 py-2 rounded hover:bg-green-700 transition text-sm font-semibold shadow-md">
-                            Simpan Data Jasa
-                        </button>
+                        <div class="flex gap-2 mb-4">
+                            <button id="jasaEditModeBtn"
+                                class="flex items-center bg-[#FFA500] text-white px-3 py-2 rounded hover:bg-orange-600 transition text-sm font-semibold shadow-md">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 4v16m8-8H4"></path>
+                                </svg>
+                                Edit Data Jasa
+                            </button>
+                            <button id="jasaCancelEditBtn"
+                                class="flex items-center bg-gray-500 text-white px-3 py-2 rounded hover:bg-gray-600 transition text-sm font-semibold shadow-md hidden">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                                    </path>
+                                </svg>
+                                Batal
+                            </button>
+                            <button id="jasaSaveAllBtn"
+                                class="flex items-center bg-[#67BC4B] text-white px-6 py-2 rounded hover:bg-green-700 transition text-sm font-semibold shadow-md">
+                                <x-lucide-save class="w-4 h-4 mr-2" />
+                                Simpan Data Jasa
+                            </button>
+                        </div>
                     </div>
                     <div id="jasaSectionsContainer"></div>
                 </div>
@@ -276,76 +292,92 @@
                 function loadJasaData() {
                     const penawaranId = {{ $penawaran->id_penawaran }};
 
-                    console.log('🔍 Fetching jasa data for penawaran:', penawaranId);
-
                     fetch(`/jasa/detail?id=${penawaranId}`)
                         .then(res => {
                             if (!res.ok) throw new Error('Network response was not ok');
                             return res.json();
                         })
                         .then(data => {
-                            console.log('✅ Jasa data loaded:', data);
-
+                            console.log('🟢 Response dari /jasa/detail:', data); // Tambahkan log ini
                             jasaInitialSections = data.sections || [];
                             jasaProfit = data.profit || 0;
                             jasaPph = data.pph || 0;
                             jasaHasExistingData = jasaInitialSections.length > 0;
 
-                            // Set nilai profit dan pph
                             document.getElementById('jasaProfitInput').value = jasaProfit;
                             document.getElementById('jasaPphInput').value = jasaPph;
 
-                            // Inisialisasi sections
                             if (jasaHasExistingData) {
-                                console.log(`📦 Creating ${jasaInitialSections.length} existing jasa sections...`);
-                                jasaInitialSections.forEach(section => createJasaSection(section));
+                                jasaInitialSections.forEach(section => createJasaSection(section, false));
+                                jasaIsEditMode = false;
                                 toggleJasaEditMode(false);
+                                document.getElementById('jasaEditModeBtn').classList.remove('hidden');
+                                document.getElementById('jasaCancelEditBtn').classList.add('hidden');
+                                document.getElementById('jasaSaveAllBtn').classList.add('hidden');
+                                console.log('🔒 Mode: VIEW (jasa data exists)');
                             } else {
-                                console.log('🆕 No existing jasa data, creating empty section');
-                                createJasaSection();
+                                createJasaSection(null, true);
+                                jasaIsEditMode = true;
                                 toggleJasaEditMode(true);
+                                document.getElementById('jasaEditModeBtn').classList.add('hidden');
+                                document.getElementById('jasaCancelEditBtn').classList.remove('hidden');
+                                document.getElementById('jasaSaveAllBtn').classList.remove('hidden');
+                                console.log('✏️ Mode: EDIT (new jasa data)');
                             }
                         })
                         .catch(error => {
-                            console.error('❌ Error loading jasa data:', error);
-                            console.log('Creating empty jasa section as fallback...');
-                            createJasaSection();
-                            toggleJasaEditMode(true);
+                            if (jasaSections.length === 0) {
+                                createJasaSection(null, true);
+                                jasaIsEditMode = true;
+                                toggleJasaEditMode(true);
+                                document.getElementById('jasaEditModeBtn').classList.add('hidden');
+                                document.getElementById('jasaCancelEditBtn').classList.remove('hidden');
+                                document.getElementById('jasaSaveAllBtn').classList.remove('hidden');
+                                console.log('✏️ Mode: EDIT (first create jasa data)');
+                            }
                         });
                 }
+
+                document.getElementById('jasaEditModeBtn').addEventListener('click', () => {
+                    toggleJasaEditMode(true);
+                    jasaIsEditMode = true;
+                    document.getElementById('jasaEditModeBtn').classList.add('hidden');
+                    document.getElementById('jasaCancelEditBtn').classList.remove('hidden');
+                    document.getElementById('jasaSaveAllBtn').classList.remove('hidden');
+                });
+
+                document.getElementById('jasaCancelEditBtn').addEventListener('click', () => {
+                    if (confirm('Batalkan perubahan dan kembali ke mode view?')) {
+                        window.location.reload();
+                    }
+                });
 
                 function toggleJasaEditMode(enable) {
                     jasaIsEditMode = enable;
 
-                    console.log('🔧 Toggle jasa edit mode:', enable);
-
-                    // Disable/enable input fields
                     document.getElementById('jasaProfitInput').disabled = !enable;
                     document.getElementById('jasaPphInput').disabled = !enable;
-                    document.getElementById('jasaAddSectionBtn').disabled = !enable;
+                    // Cek tombol add section jasa, jika ada
+                    const addSectionBtn = document.getElementById('jasaAddSectionBtn');
+                    if (addSectionBtn) addSectionBtn.disabled = !enable;
 
-                    // Toggle visibility tombol tambah section
-                    if (enable) {
-                        document.getElementById('jasaAddSectionBtn').classList.remove('opacity-50',
-                            'cursor-not-allowed');
-                    } else {
-                        document.getElementById('jasaAddSectionBtn').classList.add('opacity-50', 'cursor-not-allowed');
-                    }
-
-                    // Update semua section yang ada
                     jasaSections.forEach(section => {
+                        // Hapus pemanggilan setEditable karena tidak ada di jspreadsheet v4
+                        // section.spreadsheet.setEditable(enable); <-- HAPUS INI
+
                         const sectionElement = document.getElementById(section.id);
                         const spreadsheetWrapper = document.getElementById(section.spreadsheetId);
                         const namaSectionInput = sectionElement.querySelector('.nama-section-input');
                         const addRowBtn = sectionElement.querySelector('.add-row-btn');
                         const deleteSectionBtn = sectionElement.querySelector('.delete-section-btn');
 
+                        // Gunakan CSS untuk mematikan interaksi
                         if (enable) {
                             spreadsheetWrapper.classList.remove('spreadsheet-disabled');
-                            section.spreadsheet.options.editable = true;
+                            section.spreadsheet.options.editable = true; 
                         } else {
                             spreadsheetWrapper.classList.add('spreadsheet-disabled');
-                            section.spreadsheet.options.editable = false;
+                            section.spreadsheet.options.editable = false; 
                         }
 
                         namaSectionInput.disabled = !enable;
@@ -353,147 +385,6 @@
                         deleteSectionBtn.classList.toggle('hidden', !enable);
                     });
                 }
-
-                function createJasaSection(sectionData = null) {
-                    jasaSectionCounter++;
-                    const sectionId = 'jasa-section-' + jasaSectionCounter;
-                    const spreadsheetId = 'jasa-spreadsheet-' + jasaSectionCounter;
-
-                    console.log(`🏗️ Creating jasa section: ${sectionId}`, {
-                        hasData: !!sectionData,
-                        counter: jasaSectionCounter
-                    });
-
-                    const initialData = sectionData ? sectionData.data.map(row => [
-                        row.no || '',
-                        row.deskripsi || '',
-                        row.vol || 0,
-                        row.hari || 0,
-                        row.orang || 0,
-                        row.unit || 0,
-                        row.total || 0,
-                    ]) : [
-                        ['', '', 0, 0, 0, 0, 0],
-                        ['', '', 0, 0, 0, 0, 0],
-                    ];
-
-                    const sectionHTML = `
-        <div class="section-card p-4 mb-6 bg-white" id="${sectionId}">
-            <div class="flex justify-between items-center mb-3">
-                <div class="flex items-center gap-4">
-                    <h3 class="text-lg font-bold text-gray-700">Section Jasa ${jasaSectionCounter}</h3>
-                    <input type="text" class="nama-section-input border rounded px-3 py-1" 
-                        placeholder="Ex: Pekerjaan Instalasi" 
-                        value="${sectionData && sectionData.nama_section ? sectionData.nama_section : ''}">
-                </div>
-                <div class="flex gap-2">
-                    <button class="add-row-btn bg-[#02ADB8] text-white px-3 py-1 rounded hover:bg-blue-700 transition text-sm">
-                        ➕ Tambah Baris
-                    </button>
-                    <button class="delete-section-btn bg-red-500 text-white px-3 py-1 rounded hover:bg-red-700 transition text-sm">
-                        🗑️ Hapus Section
-                    </button>
-                </div>
-            </div>
-            <div id="${spreadsheetId}"></div>
-            <div class="text-right mt-3 font-semibold text-gray-700">
-                Subtotal: Rp <span id="${sectionId}-subtotal">0</span>
-            </div>
-        </div>`;
-
-                    document.getElementById('jasaSectionsContainer').insertAdjacentHTML('beforeend', sectionHTML);
-
-                    const spreadsheet = jspreadsheet(document.getElementById(spreadsheetId), {
-                        data: initialData,
-                        columns: [{
-                                title: 'No',
-                                width: 60
-                            },
-                            {
-                                title: 'Deskripsi',
-                                width: 250
-                            },
-                            {
-                                title: 'Vol',
-                                width: 80,
-                                type: 'numeric'
-                            },
-                            {
-                                title: 'Hari',
-                                width: 80,
-                                type: 'numeric'
-                            },
-                            {
-                                title: 'Orang',
-                                width: 80,
-                                type: 'numeric'
-                            },
-                            {
-                                title: 'Unit',
-                                width: 100,
-                                type: 'numeric'
-                            },
-                            {
-                                title: 'Total',
-                                width: 120,
-                                type: 'numeric',
-                                readOnly: true
-                            },
-                        ],
-                        tableOverflow: true,
-                        tableWidth: '100%',
-                        tableHeight: '350px',
-                        editable: jasaIsEditMode,
-                        onchange: function(instance, cell, col, row, value) {
-                            // Trigger recalc jika Vol, Hari, Orang, atau Unit berubah
-                            if ([2, 3, 4, 5].includes(col)) {
-                                console.log('📝 Jasa cell changed:', {
-                                    col,
-                                    row,
-                                    value,
-                                    columnName: ['No', 'Deskripsi', 'Vol', 'Hari', 'Orang', 'Unit',
-                                        'Total'
-                                    ][col]
-                                });
-                                recalcJasaRow(spreadsheet, row);
-                            }
-                        }
-                    });
-
-                    const sectionElement = document.getElementById(sectionId);
-
-                    // Event listener tambah baris
-                    sectionElement.querySelector('.add-row-btn').addEventListener('click', () => {
-                        spreadsheet.insertRow();
-                        console.log('➕ Row added to jasa section:', sectionId);
-                    });
-
-                    // Event listener hapus section
-                    sectionElement.querySelector('.delete-section-btn').addEventListener('click', () => {
-                        if (confirm('Yakin ingin menghapus section jasa ini?')) {
-                            jasaSections = jasaSections.filter(s => s.id !== sectionId);
-                            sectionElement.remove();
-                            console.log('🗑️ Jasa section deleted:', sectionId);
-                        }
-                    });
-
-                    // Simpan ke array
-                    jasaSections.push({
-                        id: sectionId,
-                        spreadsheetId: spreadsheetId,
-                        spreadsheet: spreadsheet
-                    });
-
-                    // PENTING: Kalkulasi semua row setelah spreadsheet dibuat
-                    console.log(`🔄 Initial calculation for ${sectionId}, rows: ${initialData.length}`);
-                    initialData.forEach((row, i) => {
-                        recalcJasaRow(spreadsheet, i);
-                    });
-
-                    console.log('✅ Jasa section created successfully. Total sections:', jasaSections.length);
-                }
-
-                // BAGIAN FUNGSI JASA - Replace bagian ini di file Anda
 
                 function recalcJasaRow(spreadsheet, rowIndex) {
                     // Ambil data fresh dari spreadsheet
@@ -548,7 +439,7 @@
                     }
                 }
 
-                function createJasaSection(sectionData = null) {
+                function createJasaSection(sectionData = null, editable = true) {
                     jasaSectionCounter++;
                     const sectionId = 'jasa-section-' + jasaSectionCounter;
                     const spreadsheetId = 'jasa-spreadsheet-' + jasaSectionCounter;
@@ -637,7 +528,7 @@
                         tableOverflow: true,
                         tableWidth: '100%',
                         tableHeight: '350px',
-                        editable: jasaIsEditMode,
+                        editable: editable,
                         onchange: function(instance, cell, col, row, value) {
                             console.log('🔔 onchange triggered:', {
                                 col,
