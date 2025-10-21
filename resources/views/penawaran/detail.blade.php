@@ -75,10 +75,13 @@
 
         <div class="bg-white shadow rounded-lg p-6">
             <div class="flex border-b mb-4">
-                <button class="tab-btn px-4 py-2 font-semibold text-green-600 border-b-2 border-green-600 focus:outline-none"
-                    data-tab="penawaran">Penawaran</button>
+                <button
+                    class="tab-btn px-4 py-2 font-semibold text-green-600 border-b-2 border-green-600 focus:outline-none"
+                    data-tab="penawaran">Penawaran & Jasa</button>
                 <button class="tab-btn px-4 py-2 font-semibold text-gray-600 hover:text-green-600 focus:outline-none"
-                    data-tab="jasa">Jasa</button>
+                    data-tab="Jasa">Rincian Jasa</button>
+                <button class="tab-btn px-4 py-2 font-semibold text-gray-600 hover:text-green-600 focus:outline-none"
+                    data-tab="preview">Preview</button>
             </div>
 
             <div id="tabContent">
@@ -146,11 +149,30 @@
                             </ul>
                         </div>
                     </div>
-
-                    <!-- Panel Jasa -->
-                    <div class="tab-panel hidden" data-tab="jasa">
-                        <p>Konten tab Jasa...</p>
+                </div>
+                <!-- Panel Jasa -->
+                <div class="tab-panel hidden" data-tab="Jasa">
+                    <div class="flex gap-4 mb-4">
+                        <div>
+                            <label class="block text-sm font-semibold mb-1">Profit (%)</label>
+                            <input type="number" id="jasaProfitInput" class="border rounded px-3 py-2 bg-white w-24"
+                                min="0" step="0.1" value="0">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold mb-1">PPH (%)</label>
+                            <input type="number" id="jasaPphInput" class="border rounded px-3 py-2 bg-white w-24"
+                                min="0" step="0.1" value="0">
+                        </div>
+                        <button id="jasaAddSectionBtn"
+                            class="bg-[#02ADB8] text-white px-4 py-2 rounded hover:bg-blue-700 transition text-sm font-semibold shadow-md">
+                            Tambah Section Jasa
+                        </button>
+                        <button id="jasaSaveAllBtn"
+                            class="bg-[#67BC4B] text-white px-6 py-2 rounded hover:bg-green-700 transition text-sm font-semibold shadow-md">
+                            Simpan Data Jasa
+                        </button>
                     </div>
+                    <div id="jasaSectionsContainer"></div>
                 </div>
             </div>
         </div>
@@ -169,9 +191,64 @@
 
         <script>
             document.addEventListener("DOMContentLoaded", function() {
+                // =====================================================
+                // DEKLARASI VARIABEL
+                // =====================================================
+
+                // Variabel Penawaran
                 let sections = [];
                 let sectionCounter = 0;
                 let isEditMode = !hasExistingData;
+
+                // Variabel Jasa
+                let jasaSections = [];
+                let jasaSectionCounter = 0;
+                let jasaInitialSections = [];
+                let jasaProfit = 0;
+                let jasaPph = 0;
+                let jasaIsEditMode = true;
+                let jasaHasExistingData = false;
+
+                // =====================================================
+                // TAB SWITCHING LOGIC
+                // =====================================================
+
+                const tabButtons = document.querySelectorAll('.tab-btn');
+                const tabPanels = document.querySelectorAll('.tab-panel');
+
+                tabButtons.forEach(button => {
+                    button.addEventListener('click', function() {
+                        const targetTab = this.getAttribute('data-tab');
+
+                        // Update button styles
+                        tabButtons.forEach(btn => {
+                            btn.classList.remove('text-green-600', 'border-b-2',
+                                'border-green-600');
+                            btn.classList.add('text-gray-600');
+                        });
+                        this.classList.remove('text-gray-600');
+                        this.classList.add('text-green-600', 'border-b-2', 'border-green-600');
+
+                        // Show/hide panels
+                        tabPanels.forEach(panel => {
+                            if (panel.getAttribute('data-tab') === targetTab) {
+                                panel.classList.remove('hidden');
+                            } else {
+                                panel.classList.add('hidden');
+                            }
+                        });
+
+                        // Load jasa data jika tab Jasa diklik (hanya sekali)
+                        if (targetTab === 'Jasa' && jasaSections.length === 0) {
+                            console.log('🔄 Loading Jasa tab for first time...');
+                            loadJasaData();
+                        }
+                    });
+                });
+
+                // =====================================================
+                // UTILITY FUNCTIONS
+                // =====================================================
 
                 function parseNumber(value) {
                     if (typeof value === "string") {
@@ -190,7 +267,366 @@
                     return result;
                 }
 
-                // Fungsi untuk kalkulasi ulang harga
+                // =====================================================
+                // FUNGSI JASA
+                // =====================================================
+
+                function loadJasaData() {
+                    const penawaranId = {{ $penawaran->id_penawaran }};
+
+                    console.log('🔍 Fetching jasa data for penawaran:', penawaranId);
+
+                    fetch(`/jasa/detail?id=${penawaranId}`)
+                        .then(res => {
+                            if (!res.ok) throw new Error('Network response was not ok');
+                            return res.json();
+                        })
+                        .then(data => {
+                            console.log('✅ Jasa data loaded:', data);
+
+                            jasaInitialSections = data.sections || [];
+                            jasaProfit = data.profit || 0;
+                            jasaPph = data.pph || 0;
+                            jasaHasExistingData = jasaInitialSections.length > 0;
+
+                            // Set nilai profit dan pph
+                            document.getElementById('jasaProfitInput').value = jasaProfit;
+                            document.getElementById('jasaPphInput').value = jasaPph;
+
+                            // Inisialisasi sections
+                            if (jasaHasExistingData) {
+                                console.log(`📦 Creating ${jasaInitialSections.length} existing jasa sections...`);
+                                jasaInitialSections.forEach(section => createJasaSection(section));
+                                toggleJasaEditMode(false);
+                            } else {
+                                console.log('🆕 No existing jasa data, creating empty section');
+                                createJasaSection();
+                                toggleJasaEditMode(true);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('❌ Error loading jasa data:', error);
+                            console.log('Creating empty jasa section as fallback...');
+                            createJasaSection();
+                            toggleJasaEditMode(true);
+                        });
+                }
+
+                function toggleJasaEditMode(enable) {
+                    jasaIsEditMode = enable;
+
+                    console.log('🔧 Toggle jasa edit mode:', enable);
+
+                    // Disable/enable input fields
+                    document.getElementById('jasaProfitInput').disabled = !enable;
+                    document.getElementById('jasaPphInput').disabled = !enable;
+                    document.getElementById('jasaAddSectionBtn').disabled = !enable;
+
+                    // Toggle visibility tombol tambah section
+                    if (enable) {
+                        document.getElementById('jasaAddSectionBtn').classList.remove('opacity-50',
+                            'cursor-not-allowed');
+                    } else {
+                        document.getElementById('jasaAddSectionBtn').classList.add('opacity-50', 'cursor-not-allowed');
+                    }
+
+                    // Update semua section yang ada
+                    jasaSections.forEach(section => {
+                        const sectionElement = document.getElementById(section.id);
+                        const spreadsheetWrapper = document.getElementById(section.spreadsheetId);
+                        const namaSectionInput = sectionElement.querySelector('.nama-section-input');
+                        const addRowBtn = sectionElement.querySelector('.add-row-btn');
+                        const deleteSectionBtn = sectionElement.querySelector('.delete-section-btn');
+
+                        if (enable) {
+                            spreadsheetWrapper.classList.remove('spreadsheet-disabled');
+                            section.spreadsheet.options.editable = true;
+                        } else {
+                            spreadsheetWrapper.classList.add('spreadsheet-disabled');
+                            section.spreadsheet.options.editable = false;
+                        }
+
+                        namaSectionInput.disabled = !enable;
+                        addRowBtn.classList.toggle('hidden', !enable);
+                        deleteSectionBtn.classList.toggle('hidden', !enable);
+                    });
+                }
+
+                function createJasaSection(sectionData = null) {
+                    jasaSectionCounter++;
+                    const sectionId = 'jasa-section-' + jasaSectionCounter;
+                    const spreadsheetId = 'jasa-spreadsheet-' + jasaSectionCounter;
+
+                    console.log(`🏗️ Creating jasa section: ${sectionId}`, {
+                        hasData: !!sectionData,
+                        counter: jasaSectionCounter
+                    });
+
+                    const initialData = sectionData ? sectionData.data.map(row => [
+                        row.no || '',
+                        row.deskripsi || '',
+                        row.vol || 0,
+                        row.hari || 0,
+                        row.orang || 0,
+                        row.unit || '',
+                        row.total || 0,
+                    ]) : [
+                        ['', '', 0, 0, 0, '', 0],
+                        ['', '', 0, 0, 0, '', 0],
+                    ];
+
+                    const sectionHTML = `
+        <div class="section-card p-4 mb-6 bg-white" id="${sectionId}">
+            <div class="flex justify-between items-center mb-3">
+                <div class="flex items-center gap-4">
+                    <h3 class="text-lg font-bold text-gray-700">Section Jasa ${jasaSectionCounter}</h3>
+                    <input type="text" class="nama-section-input border rounded px-3 py-1" 
+                        placeholder="Ex: Pekerjaan Instalasi" 
+                        value="${sectionData && sectionData.nama_section ? sectionData.nama_section : ''}">
+                </div>
+                <div class="flex gap-2">
+                    <button class="add-row-btn bg-[#02ADB8] text-white px-3 py-1 rounded hover:bg-blue-700 transition text-sm">
+                        ➕ Tambah Baris
+                    </button>
+                    <button class="delete-section-btn bg-red-500 text-white px-3 py-1 rounded hover:bg-red-700 transition text-sm">
+                        🗑️ Hapus Section
+                    </button>
+                </div>
+            </div>
+            <div id="${spreadsheetId}"></div>
+            <div class="text-right mt-3 font-semibold text-gray-700">
+                Subtotal: Rp <span id="${sectionId}-subtotal">0</span>
+            </div>
+        </div>`;
+
+                    document.getElementById('jasaSectionsContainer').insertAdjacentHTML('beforeend', sectionHTML);
+
+                    const spreadsheet = jspreadsheet(document.getElementById(spreadsheetId), {
+                        data: initialData,
+                        columns: [{
+                                title: 'No',
+                                width: 60
+                            },
+                            {
+                                title: 'Deskripsi',
+                                width: 250
+                            },
+                            {
+                                title: 'Vol',
+                                width: 80,
+                                type: 'numeric'
+                            },
+                            {
+                                title: 'Hari',
+                                width: 80,
+                                type: 'numeric'
+                            },
+                            {
+                                title: 'Orang',
+                                width: 80,
+                                type: 'numeric'
+                            },
+                            {
+                                title: 'Unit',
+                                width: 100
+                            },
+                            {
+                                title: 'Total',
+                                width: 120,
+                                type: 'numeric',
+                                readOnly: true
+                            },
+                        ],
+                        tableOverflow: true,
+                        tableWidth: '100%',
+                        tableHeight: '350px',
+                        editable: jasaIsEditMode,
+                        onchange: function(instance, cell, col, row, value) {
+                            if ([2, 3, 4, 5].includes(col)) {
+                                console.log('📝 Jasa cell changed:', {
+                                    col,
+                                    row,
+                                    value
+                                });
+                                recalcJasaRow(spreadsheet, row);
+                            }
+                        }
+                    });
+
+                    const sectionElement = document.getElementById(sectionId);
+
+                    // Event listener tambah baris
+                    sectionElement.querySelector('.add-row-btn').addEventListener('click', () => {
+                        spreadsheet.insertRow();
+                        console.log('➕ Row added to jasa section:', sectionId);
+                    });
+
+                    // Event listener hapus section
+                    sectionElement.querySelector('.delete-section-btn').addEventListener('click', () => {
+                        if (confirm('Yakin ingin menghapus section jasa ini?')) {
+                            jasaSections = jasaSections.filter(s => s.id !== sectionId);
+                            sectionElement.remove();
+                            console.log('🗑️ Jasa section deleted:', sectionId);
+                        }
+                    });
+
+                    // Simpan ke array
+                    jasaSections.push({
+                        id: sectionId,
+                        spreadsheetId: spreadsheetId,
+                        spreadsheet: spreadsheet
+                    });
+
+                    // Update subtotal
+                    updateJasaSubtotal({
+                        id: sectionId,
+                        spreadsheet: spreadsheet
+                    });
+
+                    console.log('✅ Jasa section created successfully. Total sections:', jasaSections.length);
+                }
+
+                function recalcJasaRow(spreadsheet, rowIndex) {
+                    const row = spreadsheet.getRowData(rowIndex);
+                    const vol = parseNumber(row[2]);
+                    const hari = parseNumber(row[3]);
+                    const orang = parseNumber(row[4]);
+                    const unitStr = row[5]; // Unit adalah string (ex: "50000")
+                    const unit = parseNumber(unitStr);
+
+                    console.log('🧮 recalcJasaRow:', {
+                        rowIndex,
+                        vol,
+                        hari,
+                        orang,
+                        unitStr,
+                        unit
+                    });
+
+                    let total = unit; // Mulai dari nilai unit
+
+                    // Kalikan dengan faktor-faktor yang ada (> 0)
+                    if (vol > 0) total *= vol;
+                    if (hari > 0) total *= hari;
+                    if (orang > 0) total *= orang;
+
+                    console.log('💰 Calculated total:', total);
+
+                    spreadsheet.setValueFromCoords(6, rowIndex, total, true);
+
+                    // Update subtotal untuk section ini
+                    const section = jasaSections.find(s => s.spreadsheet === spreadsheet);
+                    if (section) {
+                        updateJasaSubtotal(section);
+                    }
+                }
+
+                function updateJasaSubtotal(section) {
+                    const data = section.spreadsheet.getData();
+                    let subtotal = 0;
+
+                    data.forEach(row => {
+                        subtotal += parseNumber(row[6]);
+                    });
+
+                    const subtotalEl = document.getElementById(`${section.id}-subtotal`);
+                    if (subtotalEl) {
+                        subtotalEl.textContent = subtotal.toLocaleString('id-ID');
+                    }
+                }
+
+                // =====================================================
+                // EVENT LISTENERS JASA
+                // =====================================================
+
+                // Tombol tambah section jasa
+                document.getElementById('jasaAddSectionBtn').addEventListener('click', () => {
+                    if (jasaIsEditMode) {
+                        createJasaSection();
+                        console.log('➕ New jasa section added');
+                    }
+                });
+
+                // Input profit jasa - recalculate all
+                document.getElementById('jasaProfitInput').addEventListener('input', function() {
+                    console.log('💰 Jasa profit changed to:', this.value);
+                    jasaSections.forEach(section => {
+                        const data = section.spreadsheet.getData();
+                        data.forEach((row, i) => {
+                            recalcJasaRow(section.spreadsheet, i);
+                        });
+                    });
+                });
+
+                // Tombol simpan jasa
+                document.getElementById('jasaSaveAllBtn').addEventListener('click', () => {
+                    const btn = document.getElementById('jasaSaveAllBtn');
+                    btn.innerHTML = "⏳ Menyimpan...";
+                    btn.disabled = true;
+
+                    const allSectionsData = jasaSections.map(section => {
+                        const sectionElement = document.getElementById(section.id);
+                        const namaSectionInput = sectionElement.querySelector('.nama-section-input');
+                        const rawData = section.spreadsheet.getData();
+
+                        return {
+                            nama_section: namaSectionInput.value,
+                            data: rawData.map(row => ({
+                                no: row[0],
+                                deskripsi: row[1],
+                                vol: parseNumber(row[2]),
+                                hari: parseNumber(row[3]),
+                                orang: parseNumber(row[4]),
+                                unit: row[5],
+                                total: parseNumber(row[6]),
+                            }))
+                        };
+                    });
+
+                    console.log('💾 Saving jasa data:', {
+                        penawaran_id: {{ $penawaran->id_penawaran }},
+                        profit: parseNumber(document.getElementById('jasaProfitInput').value),
+                        pph: parseNumber(document.getElementById('jasaPphInput').value),
+                        sections: allSectionsData
+                    });
+
+                    fetch("{{ route('jasa.save') }}", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "X-CSRF-TOKEN": "{{ csrf_token() }}"
+                            },
+                            body: JSON.stringify({
+                                penawaran_id: {{ $penawaran->id_penawaran }},
+                                profit: parseNumber(document.getElementById('jasaProfitInput')
+                                    .value) || 0,
+                                pph: parseNumber(document.getElementById('jasaPphInput').value) ||
+                                    0,
+                                sections: allSectionsData
+                            })
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            console.log('✅ Jasa data saved successfully:', data);
+                            btn.innerHTML = "✅ Tersimpan!";
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 1500);
+                        })
+                        .catch(error => {
+                            console.error('❌ Failed to save jasa data:', error);
+                            btn.innerHTML = "❌ Gagal";
+                            setTimeout(() => {
+                                btn.innerHTML = "Simpan Data Jasa";
+                                btn.disabled = false;
+                            }, 2000);
+                        });
+                });
+
+                // =====================================================
+                // FUNGSI PENAWARAN
+                // =====================================================
+
                 function recalculateRow(spreadsheet, rowIndex, changedCol = null, newValue = null) {
                     const profitPercent = parseNumber(document.getElementById('profitInput').value) || 0;
                     const profitMultiplier = 1 + (profitPercent / 100);
@@ -226,11 +662,9 @@
                     spreadsheet.setValueFromCoords(6, rowIndex, total, true);
                     updateSubtotal(sections.find(s => s.spreadsheet === spreadsheet));
 
-
                     console.log('✅ Updated - Harga Satuan:', hargaSatuan, 'Harga Total:', total);
                 }
 
-                // Fungsi untuk kalkulasi semua baris di semua section
                 function recalculateAll() {
                     console.log('🔄 recalculateAll - Starting...');
 
@@ -264,10 +698,9 @@
                             // Parameter ke-4 harus TRUE agar cell ter-render
                             section.spreadsheet.setValueFromCoords(5, i, hargaSatuan, true);
                             section.spreadsheet.setValueFromCoords(6, i, total, true);
-                            updateSubtotal(sections.find(s => s.spreadsheet === spreadsheet));
-
-
                         });
+
+                        updateSubtotal(section);
                     });
 
                     console.log('✅ recalculateAll - Completed');
@@ -336,33 +769,33 @@
                     ];
 
                     const sectionHTML = `
-                    <div class="section-card p-4 mb-6 bg-white" id="${sectionId}">
-                        <div class="flex justify-between items-center mb-4">
-                            <div class="flex items-center gap-4">
-                                <h3 class="text-lg font-bold text-gray-700">Section ${sectionCounter}</h3>
-                                <input type="text" class="nama-section-input border rounded px-3 py-1 ml-2" placeholder="Ex: Main Unit" value="${sectionData && sectionData.nama_section ? sectionData.nama_section : ''}">
-                                <div class="flex items-center">
-                                    <label class="block text-sm font-semibold mr-2">Area Pemasangan:</label>
-                                    <input type="text" class="area-select border rounded px-3 py-1 ml-2" placeholder="Ex: Kantor" value="${sectionData && sectionData.area ? sectionData.area : ''}">
-                                </div>
-                            </div>
-                            <div class="flex gap-2 items-center">
-                            <button class="flex items-center add-row-btn bg-[#02ADB8] text-white px-3 py-1 rounded hover:bg-blue-700 transition text-sm">
-                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg> Tambah Baris
-                            </button>
-                            <button class="flex items-center delete-row-btn bg-red-500 text-white px-3 py-1 rounded hover:bg-red-700 transition text-sm">
-                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg> Hapus Baris
-                            </button>
-                            <button class="delete-section-btn bg-white text-gray-700 px-3 py-1 rounded hover:bg-gray-700 hover:text-white transition text-sm">
-                                ❌
-                            </button>
-                        </div>
-                        </div>
-                        <div id="${spreadsheetId}"></div>
-                        <div class="text-right mt-3 font-semibold text-gray-700">
-                            Subtotal: Rp <span id="${sectionId}-subtotal">0</span>
-                        </div>
-                    </div>`;
+        <div class="section-card p-4 mb-6 bg-white" id="${sectionId}">
+            <div class="flex justify-between items-center mb-4">
+                <div class="flex items-center gap-4">
+                    <h3 class="text-lg font-bold text-gray-700">Section ${sectionCounter}</h3>
+                    <input type="text" class="nama-section-input border rounded px-3 py-1 ml-2" placeholder="Ex: Main Unit" value="${sectionData && sectionData.nama_section ? sectionData.nama_section : ''}">
+                    <div class="flex items-center">
+                        <label class="block text-sm font-semibold mr-2">Area Pemasangan:</label>
+                        <input type="text" class="area-select border rounded px-3 py-1 ml-2" placeholder="Ex: Kantor" value="${sectionData && sectionData.area ? sectionData.area : ''}">
+                    </div>
+                </div>
+                <div class="flex gap-2 items-center">
+                <button class="flex items-center add-row-btn bg-[#02ADB8] text-white px-3 py-1 rounded hover:bg-blue-700 transition text-sm">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg> Tambah Baris
+                </button>
+                <button class="flex items-center delete-row-btn bg-red-500 text-white px-3 py-1 rounded hover:bg-red-700 transition text-sm">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg> Hapus Baris
+                </button>
+                <button class="delete-section-btn bg-white text-gray-700 px-3 py-1 rounded hover:bg-gray-700 hover:text-white transition text-sm">
+                    ❌
+                </button>
+            </div>
+            </div>
+            <div id="${spreadsheetId}"></div>
+            <div class="text-right mt-3 font-semibold text-gray-700">
+                Subtotal: Rp <span id="${sectionId}-subtotal">0</span>
+            </div>
+        </div>`;
 
                     document.getElementById('sectionsContainer').insertAdjacentHTML('beforeend', sectionHTML);
 
@@ -411,7 +844,6 @@
                         tableWidth: '100%',
                         tableHeight: '400px',
                         editable: isEditMode,
-                        // KUNCI UTAMA: Event onchange untuk trigger kalkulasi
                         onchange: function(instance, cell, colIndex, rowIndex, value) {
                             console.log('📝 Spreadsheet onChange:', {
                                 spreadsheetId,
@@ -423,10 +855,8 @@
                                 ][colIndex]
                             });
 
-                            // Kalkulasi ulang jika kolom QTY (3) atau HPP (7) berubah
                             if (colIndex == 3 || colIndex == 7) {
                                 console.log('✨ Triggering recalculateRow with new value:', value);
-                                // Pass colIndex dan value agar bisa langsung pakai nilai baru
                                 recalculateRow(spreadsheet, rowIndex, colIndex, value);
                             } else {
                                 console.log('⏭️ Skip calculation (column not QTY/HPP)');
@@ -508,7 +938,6 @@
                         id: sectionId,
                         spreadsheet
                     });
-
                 }
 
                 function updateSubtotal(section) {
@@ -525,7 +954,6 @@
                     }
                 }
 
-
                 function applyTemplateStyle(spreadsheetId) {
                     const template = document.getElementById('templateSelect').value;
                     const wrapper = document.getElementById(spreadsheetId);
@@ -533,12 +961,14 @@
                     wrapper.classList.add('template-' + template);
                 }
 
-                // Event Listeners
+                // =====================================================
+                // EVENT LISTENERS PENAWARAN
+                // =====================================================
+
                 document.getElementById('templateSelect').addEventListener('change', () => {
                     sections.forEach(sec => applyTemplateStyle(sec.spreadsheetId));
                 });
 
-                // Profit input: kalkulasi ulang SEMUA baris
                 document.getElementById('profitInput').addEventListener('input', function() {
                     console.log('💰 Profit input changed to:', this.value);
                     recalculateAll();
@@ -613,7 +1043,10 @@
                         });
                 });
 
-                // Inisialisasi section dari database
+                // =====================================================
+                // INISIALISASI PENAWARAN
+                // =====================================================
+
                 if (initialSections.length > 0) {
                     console.log('🗄️ Loading existing data...', {
                         totalSections: initialSections.length
