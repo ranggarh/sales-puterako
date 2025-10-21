@@ -17,12 +17,10 @@ class JasaDetailController extends Controller
         $pph = $details->first()->pph ?? 0;
 
         $sections = $details->groupBy(function ($item) {
-            return $item->area . '|' . $item->nama_section;
+            return $item->nama_section;
         })->map(function ($items, $key) {
-            [$area, $nama_section] = explode('|', $key);
             return [
-                'area' => $area,
-                'nama_section' => $nama_section,
+                'nama_section' => $key,
                 'data' => $items->map(function ($d) {
                     return [
                         'no' => $d->no,
@@ -57,16 +55,15 @@ class JasaDetailController extends Controller
         }
 
         $existingDetails = JasaDetail::where('id_penawaran', $penawaranId)->get()->keyBy(function ($item) {
-            return $item->no . '|' . $item->area . '|' . $item->nama_section;
+            return $item->no . '|' . $item->nama_section;
         });
 
         $newKeys = [];
 
         foreach ($sections as $section) {
-            $area = $section['area'] ?? null;
             $namaSection = $section['nama_section'] ?? null;
             foreach ($section['data'] as $row) {
-                $key = ($row['no'] ?? '') . '|' . $area . '|' . $namaSection;
+                $key = ($row['no'] ?? '') . '|' . $namaSection;
                 $newKeys[] = $key;
 
                 $values = [
@@ -86,7 +83,6 @@ class JasaDetailController extends Controller
                 } else {
                     JasaDetail::create(array_merge($values, [
                         'id_penawaran' => $penawaranId,
-                        'area' => $area,
                         'no' => $row['no'] ?? null,
                     ]));
                 }
@@ -94,7 +90,7 @@ class JasaDetailController extends Controller
         }
 
         JasaDetail::where('id_penawaran', $penawaranId)
-            ->whereNotIn(DB::raw("CONCAT(no, '|', area, '|', nama_section)"), $newKeys)
+            ->whereNotIn(DB::raw("CONCAT(no, '|', nama_section)"), $newKeys)
             ->delete();
 
         return response()->json(['success' => true]);
