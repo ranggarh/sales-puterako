@@ -82,7 +82,7 @@
                     <div class="p-2 rounded-lg mb-6">
                         <div class="flex justify-between items-center">
                             <div class="flex items-center gap-4">
-                                
+
                                 <div class="flex items-center">
                                     <label class="block text-sm font-semibold mr-2">Profit (%)</label>
                                     <input type="number" id="profitInput" class="border rounded px-3 py-2 bg-white w-24"
@@ -149,6 +149,10 @@
                                 min="0" step="0.1" value="0">
                         </div>
                         <div class="flex-1 flex justify-end items-end gap-2 mb-4">
+                            <button id="jasaAddSectionBtn"
+                                class="bg-[#02ADB8] text-white px-4 py-2 rounded hover:bg-blue-700 transition text-sm font-semibold shadow-md">
+                                Tambah Section Jasa
+                            </button>
                             <button id="jasaEditModeBtn"
                                 class="flex items-center bg-[#FFA500] text-white px-3 py-2 rounded hover:bg-orange-600 transition text-sm font-semibold shadow-md">
                                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -322,6 +326,10 @@
                             }
                         });
                 }
+
+                document.getElementById('jasaAddSectionBtn').addEventListener('click', () => {
+                    createJasaSection(null, jasaIsEditMode);
+                });
 
                 document.getElementById('jasaEditModeBtn').addEventListener('click', () => {
                     toggleJasaEditMode(true);
@@ -782,7 +790,6 @@
 
                     document.getElementById('saveAllBtn').classList.remove('hidden');
                     document.getElementById('addSectionBtn').classList.toggle('hidden', !enable);
-                    document.getElementById('templateSelect').disabled = !enable;
                     document.getElementById('profitInput').disabled = !enable;
 
                     sections.forEach(section => {
@@ -998,7 +1005,7 @@
                         spreadsheet
                     });
 
-                    applyTemplateStyle(spreadsheetId);
+                    // applyTemplateStyle(spreadsheetId);
                     updateSubtotal({
                         id: sectionId,
                         spreadsheet
