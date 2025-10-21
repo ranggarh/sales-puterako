@@ -39,6 +39,11 @@
             pointer-events: none;
             opacity: 0.7;
         }
+
+        .spreadsheet-scroll-wrapper {
+            width: 100%;
+            overflow-x: auto;
+        }
     </style>
 
     <div class="flex items-center p-8 text-gray-600 -mb-8">
@@ -313,7 +318,7 @@
                                 toggleJasaEditMode(false);
                                 document.getElementById('jasaEditModeBtn').classList.remove('hidden');
                                 document.getElementById('jasaCancelEditBtn').classList.add('hidden');
-                                
+
                                 console.log('🔒 Mode: VIEW (jasa data exists)');
                             } else {
                                 createJasaSection(null, true);
@@ -321,7 +326,7 @@
                                 toggleJasaEditMode(true);
                                 document.getElementById('jasaEditModeBtn').classList.add('hidden');
                                 document.getElementById('jasaCancelEditBtn').classList.remove('hidden');
-        
+
                                 console.log('✏️ Mode: EDIT (new jasa data)');
                             }
                         })
@@ -482,7 +487,9 @@
                     </button>
                 </div>
             </div>
-            <div id="${spreadsheetId}"></div>
+            <div class="spreadsheet-scroll-wrapper" style="overflow-x:auto;">
+                <div id="${spreadsheetId}"></div>
+            </div>
             <div class="text-right mt-3 font-semibold text-gray-700">
                 Subtotal: Rp <span id="${sectionId}-subtotal">0</span>
             </div>
@@ -867,7 +874,9 @@
                 </button>
             </div>
             </div>
-            <div id="${spreadsheetId}"></div>
+            <div class="spreadsheet-scroll-wrapper" style="overflow-x:auto;">
+                <div id="${spreadsheetId}"></div>
+            </div>
             <div class="text-right mt-3 font-semibold text-gray-700">
                 Subtotal: Rp <span id="${sectionId}-subtotal">0</span>
             </div>
