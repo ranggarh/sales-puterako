@@ -1146,6 +1146,35 @@
                 document.getElementById('isBestPrice').addEventListener('change', updateTotalKeseluruhan);
                 document.getElementById('bestPriceInput').addEventListener('input', updateTotalKeseluruhan);
 
+                function setBestPriceInputState() {
+                    const chk = document.getElementById('isBestPrice');
+                    const input = document.getElementById('bestPriceInput');
+                    const bestRow = document.getElementById('bestPriceDisplayRow');
+
+                    if (!chk || !input) return;
+
+                    if (chk.checked) {
+                        input.disabled = false;
+                        // kalau sebelumnya 0, user boleh ubah — jangan otomatis isi
+                    } else {
+                        // reset dan disable ketika unchecked
+                        input.value = '0';
+                        input.disabled = true;
+                        // sembunyikan tampilan best price di ringkasan juga
+                        if (bestRow) bestRow.style.display = 'none';
+                    }
+                }
+
+                // panggil saat load untuk set state awal
+                setBestPriceInputState();
+
+                // ganti listener existing supaya juga set state + update totals
+                document.getElementById('isBestPrice').addEventListener('change', function() {
+                    setBestPriceInputState();
+                    updateTotalKeseluruhan();
+                });
+
+                document.getElementById('bestPriceInput').addEventListener('input', updateTotalKeseluruhan);
 
                 // =====================================================
                 // EVENT LISTENERS PENAWARAN
