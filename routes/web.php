@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\JasaController;
 use App\Http\Controllers\JasaDetailController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PenawaranController;
@@ -21,7 +22,8 @@ Route::prefix('penawaran')->group(function () {
 
 Route::prefix('jasa')->group(function () {
     Route::get('/detail', [JasaDetailController::class, 'show'])->name('jasa.detail');
-    Route::post('/save', [JasaDetailController::class, 'save'])->name('jasa.save');
+    // Route::post('/save', [JasaDetailController::class, 'save'])->name('jasa.save');
+    Route::post('/save', [JasaController::class, 'save'])->name('jasa.save');
 });
 
 Route::get('/dashboard', function () {

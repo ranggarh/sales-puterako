@@ -242,6 +242,23 @@
                         </div>
                     </div>
                     <div id="jasaSectionsContainer"></div>
+
+                    <div class="w-full lg:w-72 mb-4">
+                        <div class="bg-white border rounded p-3 text-sm shadow-sm">
+                            {{-- <div class="flex justify-between">
+                                <div class="text-gray-600">Total Jasa</div>
+                                <div class="font-semibold">Rp <span id="jasaOverallTotal">0</span></div>
+                            </div>
+                            <div class="flex justify-between mt-2">
+                                <div class="text-gray-600">PPH Total</div>
+                                <div>Rp <span id="jasaOverallPph">0</span></div>
+                            </div> --}}
+                            <div class="flex justify-between ">
+                                <div class="text-gray-700 font-bold">Grand Total Jasa</div>
+                                <div class="font-bold text-green-600">Rp <span id="jasaOverallGrand">0</span></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -495,11 +512,6 @@
                     const sectionId = 'jasa-section-' + jasaSectionCounter;
                     const spreadsheetId = 'jasa-spreadsheet-' + jasaSectionCounter;
 
-                    console.log(`🏗️ Creating jasa section: ${sectionId}`, {
-                        hasData: !!sectionData,
-                        counter: jasaSectionCounter
-                    });
-
                     const initialData = sectionData ? sectionData.data.map(row => [
                         row.no || '',
                         row.deskripsi || '',
@@ -507,39 +519,47 @@
                         row.hari || 0,
                         row.orang || 0,
                         row.unit || 0,
-                        0, // Total akan dihitung ulang
+                        0,
                     ]) : [
                         ['', '', 0, 0, 0, 0, 0],
                         ['', '', 0, 0, 0, 0, 0],
                     ];
 
                     const sectionHTML = `
-        <div class="section-card p-4 mb-6 bg-white" id="${sectionId}">
-            <div class="flex justify-between items-center mb-3">
-                <div class="flex items-center gap-4">
-                    <h3 class="text-lg font-bold text-gray-700">Section Jasa ${jasaSectionCounter}</h3>
-                    <input type="text" class="nama-section-input border rounded px-3 py-1" 
-                        placeholder="Ex: Pekerjaan Instalasi" 
-                        value="${sectionData && sectionData.nama_section ? sectionData.nama_section : ''}">
-                </div>
-                <div class="flex gap-2">
-                    <button class="add-row-btn bg-[#02ADB8] text-white px-3 py-1 rounded hover:bg-blue-700 transition text-sm">
-                        <x-lucide-plus class="w-4 h-4 inline-block mr-1" />
-                         Tambah Baris
-                    </button>
-                    <button class="delete-section-btn bg-red-500 text-white px-3 py-1 rounded hover:bg-red-700 transition text-sm">
-                        <x-lucide-trash class="w-4 h-4 inline-block mr-1" />
-                         Hapus Section
-                    </button>
-                </div>
+    <div class="section-card p-4 mb-6 bg-white" id="${sectionId}">
+        <div class="flex justify-between items-center mb-3">
+            <div class="flex items-center gap-4">
+                <h3 class="text-lg font-bold text-gray-700">Section Jasa ${jasaSectionCounter}</h3>
+                <input type="text" class="nama-section-input border rounded px-3 py-1" 
+                    placeholder="Ex: Pekerjaan Instalasi" 
+                    value="${sectionData && sectionData.nama_section ? sectionData.nama_section : ''}">
             </div>
-            <div class="spreadsheet-scroll-wrapper" style="overflow-x:auto;">
-                <div id="${spreadsheetId}"></div>
+            <div class="flex gap-2">
+                <button class="add-row-btn bg-[#02ADB8] text-white px-3 py-1 rounded hover:bg-blue-700 transition text-sm">
+                    ➕ Tambah Baris
+                </button>
+                <button class="delete-section-btn bg-red-500 text-white px-3 py-1 rounded hover:bg-red-700 transition text-sm">
+                    🗑️ Hapus Section
+                </button>
             </div>
-            <div class="text-right mt-3 font-semibold text-gray-700">
-                Subtotal: Rp <span id="${sectionId}-subtotal">0</span>
+        </div>
+
+        <div class="spreadsheet-scroll-wrapper" style="overflow-x:auto;">
+            <div id="${spreadsheetId}"></div>
+        </div>
+
+        <div class="mt-3 flex items-start">
+            <!-- kiri: spreadsheet tetap mengambil ruang -->
+            <div class="flex-1"></div>
+
+            <!-- kanan: ringkasan, lebar tetap dan rata kanan -->
+            <div class="w-full lg:w-56 flex flex-col items-end text-right space-y-1">
+                <div class="text-right font-semibold">Subtotal: Rp <span id="${sectionId}-subtotal">0</span></div>
+                <div class="text-sm">Profit: Rp <span class="${sectionId}-profit-val">0</span></div>
+                <div class="text-sm">PPH: Rp <span class="${sectionId}-pph-val">0</span></div>
             </div>
-        </div>`;
+        </div>
+    </div>`;
 
                     document.getElementById('jasaSectionsContainer').insertAdjacentHTML('beforeend', sectionHTML);
 
@@ -585,84 +605,55 @@
                         tableHeight: '350px',
                         editable: editable,
                         onchange: function(instance, cell, col, row, value) {
-                            console.log('🔔 onchange triggered:', {
-                                col,
-                                row,
-                                value
-                            });
-
-                            // Trigger recalc jika Vol, Hari, Orang, atau Unit berubah
                             if (col >= 2 && col <= 5) {
-                                console.log('📝 Recalculating row:', row);
-
-                                // Delay sedikit untuk memastikan value sudah tersimpan
-                                setTimeout(() => {
-                                    recalcJasaRow(spreadsheet, row);
-                                }, 50);
+                                setTimeout(() => recalcJasaRow(spreadsheet, row), 50);
                             }
                         },
                         onafterchanges: function(instance, records) {
-                            console.log('🔔 onafterchanges triggered:', records);
-
-                            // Untuk paste multiple cells
                             const rowsToRecalc = new Set();
-                            records.forEach(record => {
-                                const col = record.x;
-                                const row = record.y;
-                                if (col >= 2 && col <= 5) {
-                                    rowsToRecalc.add(row);
-                                }
+                            records.forEach(r => {
+                                if (r.x >= 2 && r.x <= 5) rowsToRecalc.add(r.y);
                             });
-
-                            // Recalculate unique rows
-                            rowsToRecalc.forEach(row => {
-                                setTimeout(() => {
-                                    recalcJasaRow(spreadsheet, row);
-                                }, 50);
-                            });
+                            rowsToRecalc.forEach(r => setTimeout(() => recalcJasaRow(spreadsheet, r), 50));
                         }
                     });
 
                     const sectionElement = document.getElementById(sectionId);
 
-                    // Event listener tambah baris
                     sectionElement.querySelector('.add-row-btn').addEventListener('click', () => {
                         spreadsheet.insertRow();
-                        console.log('➕ Row added to jasa section:', sectionId);
                     });
 
-                    // Event listener hapus section
                     sectionElement.querySelector('.delete-section-btn').addEventListener('click', () => {
                         if (confirm('Yakin ingin menghapus section jasa ini?')) {
+                            // remove from array
                             jasaSections = jasaSections.filter(s => s.id !== sectionId);
+                            // remove DOM
                             sectionElement.remove();
-                            console.log('🗑️ Jasa section deleted:', sectionId);
+                            // update summary and renumber
+                            updateJasaOverallSummary();
+                            renumberJasaSections();
                         }
                     });
 
-                    // Simpan ke array
-                    jasaSections.push({
+                    // push to array
+                    const sectionObj = {
                         id: sectionId,
-                        spreadsheetId: spreadsheetId,
-                        spreadsheet: spreadsheet
-                    });
+                        spreadsheetId,
+                        spreadsheet
+                    };
+                    jasaSections.push(sectionObj);
 
-                    // PENTING: Kalkulasi semua row setelah spreadsheet dibuat
-                    console.log(`🔄 Running initial calculation for ${sectionId}`);
+                    // renumber headings so they stay contiguous (Section Jasa 1..n)
+                    renumberJasaSections();
 
-                    // Gunakan setTimeout untuk memastikan spreadsheet sudah fully rendered
+                    // initial calculate rows then section totals
                     setTimeout(() => {
                         const totalRows = spreadsheet.getData().length;
-                        console.log(`   Calculating ${totalRows} rows...`);
-
-                        for (let i = 0; i < totalRows; i++) {
-                            recalcJasaRow(spreadsheet, i);
-                        }
-
-                        console.log('✅ Initial calculation completed');
+                        for (let i = 0; i < totalRows; i++) recalcJasaRow(spreadsheet, i);
+                        computeJasaSectionTotals(sectionObj);
+                        updateJasaOverallSummary();
                     }, 100);
-
-                    console.log('✅ Jasa section created. Total sections:', jasaSections.length);
                 }
 
                 function updateJasaSubtotal(section) {
@@ -680,12 +671,105 @@
                         subtotalEl.textContent = subtotal.toLocaleString('id-ID');
                         console.log('💰 Subtotal updated:', subtotal);
                     }
+
+                    // TAMBAHAN: Update total keseluruhan setiap kali subtotal berubah
+                    updateTotalKeseluruhan();
+
+                    // TAMBAHAN: hitung ulang nilai profit/pph/grand untuk section ini
+                    // (pastikan section obj yang dikirim punya struktur {id, spreadsheet, spreadsheetId})
+                    try {
+                        computeJasaSectionTotals(section);
+                    } catch (err) {
+                        console.warn('computeJasaSectionTotals failed for', section, err);
+                    }
+                }
+
+                // ...existing code...
+                function computeJasaSectionTotals(section) {
+                    const subtotalEl = document.getElementById(`${section.id}-subtotal`);
+                    const subtotal = subtotalEl ? parseNumber(subtotalEl.textContent.replace(/\./g, '')) : 0;
+
+                    // gunakan formula pembalikan seperti di Excel:
+                    // afterProfit = subtotal / (1 - profit%)
+                    // afterPph = afterProfit / (1 - pph%)
+                    const profitPercent = parseNumber(jasaProfit) || 0;
+                    const pphPercent = parseNumber(jasaPph) || 0;
+
+                    // hindari pembagian dengan 0 atau 1
+                    const afterProfit = profitPercent > 0 ? (subtotal / (1 - (profitPercent / 100))) : subtotal;
+                    const afterPph = pphPercent > 0 ? (afterProfit / (1 - (pphPercent / 100))) : afterProfit;
+
+                    // profit display: afterProfit (sesuai permintaan)
+                    // pph display: afterPph (sesuai contoh Excel Anda)
+                    // grand per-section = afterPph
+                    const profitDisplay = Math.round(afterProfit);
+                    const pphDisplay = Math.round(afterPph);
+                    const grand = Math.round(afterPph);
+
+                    // update UI
+                    const profitSpan = document.querySelector(`#${section.id} .${section.id}-profit-val`);
+                    const pphSpan = document.querySelector(`#${section.id} .${section.id}-pph-val`);
+                    const grandSpan = document.querySelector(`#${section.id} .${section.id}-grand-val`);
+
+                    if (profitSpan) profitSpan.textContent = profitDisplay.toLocaleString('id-ID');
+                    if (pphSpan) pphSpan.textContent = pphDisplay.toLocaleString('id-ID');
+                    if (grandSpan) grandSpan.textContent = grand.toLocaleString('id-ID');
+
+                    // also update overall
+                    updateJasaOverallSummary();
+                }
+
+                function updateJasaOverallSummary() {
+                    let totalJasa = 0;
+                    let totalPphNominal = 0;
+                    let totalGrand = 0;
+
+                    jasaSections.forEach(section => {
+                        const sectionEl = document.getElementById(section.id);
+                        if (!sectionEl) return;
+                        const subtotal = parseNumber((sectionEl.querySelector(`#${section.id}-subtotal`)
+                            .textContent || '0').replace(/\./g, '')) || 0;
+
+                        const profitPercent = parseNumber(jasaProfit) || 0;
+                        const pphPercent = parseNumber(jasaPph) || 0;
+
+                        const afterProfit = profitPercent > 0 ? (subtotal / (1 - (profitPercent / 100))) :
+                            subtotal;
+                        const afterPph = pphPercent > 0 ? (afterProfit / (1 - (pphPercent / 100))) :
+                            afterProfit;
+
+                        // PPH nominal untuk section ini = afterPph - afterProfit
+                        const pphNominal = Math.round(afterPph - afterProfit);
+
+                        totalJasa += subtotal;
+                        totalPphNominal += pphNominal;
+                        totalGrand += Math.round(afterPph);
+                    });
+
+                    const overallGrandEl = document.getElementById('jasaOverallGrand');
+
+                    if (overallGrandEl) overallGrandEl.textContent = totalGrand.toLocaleString('id-ID');
+                }
+
+                function renumberJasaSections() {
+                    const cards = document.querySelectorAll('#jasaSectionsContainer .section-card');
+                    cards.forEach((card, idx) => {
+                        const h3 = card.querySelector('h3');
+                        if (h3) h3.textContent = `Section Jasa ${idx + 1}`;
+                    });
                 }
 
                 // Input profit jasa - hanya untuk informasi, tidak mempengaruhi perhitungan
                 document.getElementById('jasaProfitInput').addEventListener('input', function() {
-                    console.log('💰 Jasa profit changed to:', this.value, '(info only)');
+                    jasaProfit = parseNumber(this.value) || 0;
+                    jasaSections.forEach(s => computeJasaSectionTotals(s));
                 });
+
+                document.getElementById('jasaPphInput').addEventListener('input', function() {
+                    jasaPph = parseNumber(this.value) || 0;
+                    jasaSections.forEach(s => computeJasaSectionTotals(s));
+                });
+
 
                 // Tombol simpan jasa
                 document.getElementById('jasaSaveAllBtn').addEventListener('click', () => {

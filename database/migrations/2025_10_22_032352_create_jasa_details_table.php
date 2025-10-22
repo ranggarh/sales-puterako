@@ -9,6 +9,7 @@ class CreateJasaDetailsTable extends Migration
     {
         Schema::create('jasa_details', function (Blueprint $table) {
             $table->id('id_jasa_detail');
+            $table->unsignedBigInteger('id_jasa');
             $table->unsignedBigInteger('id_penawaran');
             $table->string('nama_section')->nullable();
             $table->string('no')->nullable();
@@ -23,6 +24,7 @@ class CreateJasaDetailsTable extends Migration
             $table->timestamps();
 
             $table->foreign('id_penawaran')->references('id_penawaran')->on('penawarans')->onDelete('cascade');
+            $table->foreign('id_jasa')->references('id_jasa')->on('jasas')->onDelete('cascade');
         });
     }
 
