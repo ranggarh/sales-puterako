@@ -89,6 +89,13 @@
                                         min="0" step="0.1" placeholder="30" value="{{ $profit ?? '' }}">
                                     <span class="ml-1 text-sm text-gray-600">%</span>
                                 </div>
+                                {{-- <!-- ADD: PPN input -->
+                                <div class="flex items-center">
+                                    <label class="block text-sm font-semibold mr-2">PPN (%)</label>
+                                    <input type="number" id="ppnInput" class="border rounded px-3 py-2 bg-white w-24"
+                                        min="0" step="0.1" value="11">
+                                    <span class="ml-1 text-sm text-gray-600">%</span>
+                                </div> --}}
                             </div>
                             <div class="flex gap-2">
                                 <button id="editModeBtn"
@@ -121,6 +128,40 @@
 
                         <!-- Container untuk semua section -->
                         <div id="sectionsContainer"></div>
+
+                        <div class="mt-6 p-4 bg-gray-50 rounded-lg border-2 border-gray-300">
+                            <div class="space-y-3">
+                                <!-- Input PPN -->
+                                <div class="flex justify-between items-center">
+                                    <label class="text-sm font-semibold text-gray-700">PPN (%):</label>
+                                    <div class="flex items-center gap-2">
+                                        <input type="number" id="ppnInput"
+                                            class="border rounded px-3 py-2 bg-white w-24 text-right" min="0"
+                                            step="0.01" value="{{ $penawaran->ppn_persen ?? 11 }}">
+                                        <span class="text-sm text-gray-600">%</span>
+                                    </div>
+                                </div>
+
+                                <!-- Total -->
+                                <div class="flex justify-between items-center text-lg font-semibold">
+                                    <span>Total:</span>
+                                    <span>Rp <span id="totalKeseluruhan">0</span></span>
+                                </div>
+
+                                <!-- PPN Nominal -->
+                                <div class="flex justify-between items-center text-lg font-semibold">
+                                    <span>PPN (<span id="ppnPersenDisplay">11</span>%):</span>
+                                    <span>Rp <span id="ppnNominal">0</span></span>
+                                </div>
+
+                                <!-- Grand Total -->
+                                <div
+                                    class="flex justify-between items-center text-xl font-bold pt-3 border-t-2 border-gray-400">
+                                    <span>Grand Total:</span>
+                                    <span>Rp <span id="grandTotal">0</span></span>
+                                </div>
+                            </div>
+                        </div>
 
                         <div class="mt-4 p-3 bg-blue-50 border border-blue-200 rounded text-xs text-gray-700">
                             💡 <strong>Tips:</strong>
@@ -257,11 +298,23 @@
 
                 function parseNumber(value) {
                     if (typeof value === "string") {
-                        value = value.replace(/,/g, "").replace(/\./g, "");
+                        value = value.trim();
+
+                        // Jika ada '.' dan ',' → asumsikan '.' sebagai pemisah ribuan dan ',' sebagai desimal
+                        if (value.indexOf('.') !== -1 && value.indexOf(',') !== -1) {
+                            value = value.replace(/\./g, '').replace(/,/g, '.');
+                        }
+                        // Jika hanya ada ',' → asumsikan ',' adalah desimal
+                        else if (value.indexOf(',') !== -1) {
+                            value = value.replace(/,/g, '.');
+                        } else {
+                            // Hapus koma ribuan (format en: "1,234,567")
+                            value = value.replace(/,/g, '');
+                        }
                     }
+
                     const result = parseFloat(value) || 0;
 
-                    // Log only if conversion happened or value is non-zero
                     if (value && result !== 0) {
                         console.log('🔢 parseNumber:', {
                             input: value,
@@ -1008,6 +1061,41 @@
                     });
                 }
 
+                function updateTotalKeseluruhan() {
+                    let totalKeseluruhan = 0;
+
+                    // Jumlahkan semua subtotal dari setiap section
+                    sections.forEach(section => {
+                        const subtotalEl = document.getElementById(`${section.id}-subtotal`);
+                        if (subtotalEl) {
+                            const subtotal = parseNumber(subtotalEl.textContent.replace(/\./g, ''));
+                            totalKeseluruhan += subtotal;
+                        }
+                    });
+
+                    // Update Total
+                    document.getElementById('totalKeseluruhan').textContent = totalKeseluruhan.toLocaleString('id-ID');
+
+                    // Hitung PPN
+                    const ppnPersen = parseNumber(document.getElementById('ppnInput').value) || 11;
+                    const ppnNominal = (totalKeseluruhan * ppnPersen) / 100;
+
+                    // Hitung Grand Total
+                    const grandTotal = totalKeseluruhan + ppnNominal;
+
+                    // Update display
+                    document.getElementById('ppnPersenDisplay').textContent = ppnPersen;
+                    document.getElementById('ppnNominal').textContent = ppnNominal.toLocaleString('id-ID');
+                    document.getElementById('grandTotal').textContent = grandTotal.toLocaleString('id-ID');
+
+                    console.log('💰 Total Summary:', {
+                        totalKeseluruhan,
+                        ppnPersen,
+                        ppnNominal,
+                        grandTotal
+                    });
+                }
+
                 function updateSubtotal(section) {
                     const data = section.spreadsheet.getData();
                     let subtotal = 0;
@@ -1020,7 +1108,16 @@
                     if (subtotalEl) {
                         subtotalEl.textContent = subtotal.toLocaleString('id-ID');
                     }
+
+                    // TAMBAHAN: Update total keseluruhan setiap kali subtotal berubah
+                    updateTotalKeseluruhan();
                 }
+
+                // Event listener untuk perubahan PPN
+                document.getElementById('ppnInput').addEventListener('input', function() {
+                    console.log('🔄 PPN changed to:', this.value);
+                    updateTotalKeseluruhan();
+                });
 
                 // =====================================================
                 // EVENT LISTENERS PENAWARAN
@@ -1078,20 +1175,23 @@
                             },
                             body: JSON.stringify({
                                 penawaran_id: {{ $penawaran->id_penawaran }},
-                                template: document.getElementById('templateSelect').value,
                                 profit: parseNumber(document.getElementById('profitInput').value) ||
                                     0,
+                                ppn_persen: parseNumber(document.getElementById('ppnInput')
+                                    .value) || 11,
                                 sections: allSectionsData
                             })
                         })
                         .then(res => res.json())
-                        .then(() => {
+                        .then(data => {
+                            console.log('✅ Data saved with totals:', data);
                             btn.innerHTML = "✅ Tersimpan!";
                             setTimeout(() => {
                                 window.location.reload();
                             }, 1500);
                         })
-                        .catch(() => {
+                        .catch(error => {
+                            console.error('❌ Save failed:', error);
                             btn.innerHTML = "❌ Gagal";
                             setTimeout(() => {
                                 btn.innerHTML = "Simpan Semua Data";

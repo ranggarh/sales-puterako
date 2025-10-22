@@ -70,24 +70,32 @@ class PenawaranController extends Controller
         $penawaranId = $data['penawaran_id'] ?? null;
         $sections = $data['sections'] ?? [];
         $profit = $data['profit'] ?? 0;
+        $ppnPersen = $data['ppn_persen'] ?? 11; // Default 11%
 
         if (!$penawaranId) {
             return response()->json(['error' => 'Penawaran ID tidak ditemukan'], 400);
         }
 
         // Ambil semua detail lama
-        $existingDetails = \App\Models\PenawaranDetail::where('id_penawaran', $penawaranId)->get()->keyBy(function ($item) {
-            return $item->no . '|' . $item->area;
-        });
+        $existingDetails = \App\Models\PenawaranDetail::where('id_penawaran', $penawaranId)
+            ->get()
+            ->keyBy(function ($item) {
+                return $item->no . '|' . $item->area;
+            });
 
         $newKeys = [];
+        $totalKeseluruhan = 0;
 
         foreach ($sections as $section) {
             $area = $section['area'] ?? null;
             $namaSection = $section['nama_section'] ?? null;
+
             foreach ($section['data'] as $row) {
                 $key = ($row['no'] ?? '') . '|' . $area;
                 $newKeys[] = $key;
+
+                $hargaTotal = $row['harga_total'] ?? 0;
+                $totalKeseluruhan += $hargaTotal;
 
                 $values = [
                     'tipe' => $row['tipe'] ?? null,
@@ -95,13 +103,12 @@ class PenawaranController extends Controller
                     'qty' => $row['qty'] ?? null,
                     'satuan' => $row['satuan'] ?? null,
                     'harga_satuan' => $row['harga_satuan'] ?? null,
-                    'harga_total' => $row['harga_total'] ?? null,
+                    'harga_total' => $hargaTotal,
                     'hpp' => $row['hpp'] ?? null,
                     'profit' => $profit,
                     'nama_section' => $namaSection,
                 ];
 
-                // Update kalau sudah ada, kalau belum buat baru
                 if (isset($existingDetails[$key])) {
                     $existingDetails[$key]->update($values);
                 } else {
@@ -114,11 +121,28 @@ class PenawaranController extends Controller
             }
         }
 
-        // Hapus data yang tidak ada lagi di input
+        // Hapus data yang tidak ada lagi
         \App\Models\PenawaranDetail::where('id_penawaran', $penawaranId)
             ->whereNotIn(DB::raw("CONCAT(no, '|', area)"), $newKeys)
             ->delete();
 
-        return response()->json(['success' => true]);
+        // Hitung PPN dan Grand Total
+        $ppnNominal = ($totalKeseluruhan * $ppnPersen) / 100;
+        $grandTotal = $totalKeseluruhan + $ppnNominal;
+
+        // Update penawaran dengan total, ppn, dan grand total
+        \App\Models\Penawaran::where('id_penawaran', $penawaranId)->update([
+            'total' => $totalKeseluruhan,
+            'ppn_persen' => $ppnPersen,
+            'ppn_nominal' => $ppnNominal,
+            'grand_total' => $grandTotal
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'total' => $totalKeseluruhan,
+            'ppn_nominal' => $ppnNominal,
+            'grand_total' => $grandTotal
+        ]);
     }
 }

@@ -14,7 +14,11 @@ class Penawaran extends Model
         'pic_admin',
         'no_penawaran',
         'lokasi',
-        'tiket'
+        'tiket',
+        'total',           
+        'ppn_persen',      
+        'ppn_nominal',     
+        'grand_total'  
     ];
 
     public function details()
