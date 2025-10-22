@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class PenawaranController extends Controller
 {
@@ -67,89 +68,143 @@ class PenawaranController extends Controller
     public function save(Request $request)
     {
         $data = $request->all();
+        Log::debug('PenawaranController::save payload', $data);
+
         $penawaranId = $data['penawaran_id'] ?? null;
         $sections = $data['sections'] ?? [];
         $profit = $data['profit'] ?? 0;
         $ppnPersen = $data['ppn_persen'] ?? 11; // Default 11%
 
         if (!$penawaranId) {
+            Log::warning('PenawaranController::save missing penawaran_id', $data);
             return response()->json(['error' => 'Penawaran ID tidak ditemukan'], 400);
         }
 
-        // Ambil semua detail lama
-        $existingDetails = \App\Models\PenawaranDetail::where('id_penawaran', $penawaranId)
-            ->get()
-            ->keyBy(function ($item) {
-                return $item->no . '|' . $item->area;
-            });
+        try {
+            // key existingDetails dengan normalisasi area & nama_section => hindari null collisions
+            $existingDetails = \App\Models\PenawaranDetail::where('id_penawaran', $penawaranId)
+                ->get()
+                ->keyBy(function ($item) {
+                    $area = (string) ($item->area ?? '');
+                    $nama = (string) ($item->nama_section ?? '');
+                    $no = (string) ($item->no ?? '');
+                    return $no . '|' . $area . '|' . $nama;
+                });
 
-        $newKeys = [];
-        $totalKeseluruhan = 0;
+            Log::debug('Existing details count', ['count' => $existingDetails->count()]);
 
-        foreach ($sections as $section) {
-            $area = $section['area'] ?? null;
-            $namaSection = $section['nama_section'] ?? null;
+            $newKeys = [];
+            $totalKeseluruhan = 0;
 
-            foreach ($section['data'] as $row) {
-                $key = ($row['no'] ?? '') . '|' . $area;
-                $newKeys[] = $key;
+            foreach ($sections as $section) {
+                // normalisasi area & nama_section agar tidak null
+                $area = (string) ($section['area'] ?? '');
+                $namaSection = (string) ($section['nama_section'] ?? '');
 
-                $hargaTotal = $row['harga_total'] ?? 0;
-                $totalKeseluruhan += $hargaTotal;
+                foreach ($section['data'] as $row) {
+                    $noStr = (string) ($row['no'] ?? '');
+                    $key = $noStr . '|' . $area . '|' . $namaSection;
+                    $newKeys[] = $key;
 
-                $values = [
-                    'tipe' => $row['tipe'] ?? null,
-                    'deskripsi' => $row['deskripsi'] ?? null,
-                    'qty' => $row['qty'] ?? null,
-                    'satuan' => $row['satuan'] ?? null,
-                    'harga_satuan' => $row['harga_satuan'] ?? null,
-                    'harga_total' => $hargaTotal,
-                    'hpp' => $row['hpp'] ?? null,
-                    'profit' => $profit,
-                    'nama_section' => $namaSection,
-                ];
+                    $hargaTotal = floatval($row['harga_total'] ?? 0);
+                    $totalKeseluruhan += $hargaTotal;
 
-                if (isset($existingDetails[$key])) {
-                    $existingDetails[$key]->update($values);
-                } else {
-                    \App\Models\PenawaranDetail::create(array_merge($values, [
-                        'id_penawaran' => $penawaranId,
+                    $values = [
+                        'tipe' => $row['tipe'] ?? null,
+                        'deskripsi' => $row['deskripsi'] ?? null,
+                        'qty' => $row['qty'] ?? null,
+                        'satuan' => $row['satuan'] ?? null,
+                        'harga_satuan' => $row['harga_satuan'] ?? null,
+                        'harga_total' => $hargaTotal,
+                        'hpp' => $row['hpp'] ?? null,
+                        'profit' => $profit,
+                        'nama_section' => $namaSection,
                         'area' => $area,
-                        'no' => $row['no'] ?? null,
-                    ]));
+                    ];
+
+                    if (isset($existingDetails[$key])) {
+                        Log::debug('Updating existing detail', ['key' => $key, 'values' => $values]);
+                        $existingDetails[$key]->update($values);
+                    } else {
+                        $createAttrs = array_merge($values, [
+                            'id_penawaran' => $penawaranId,
+                            'no' => $row['no'] ?? null,
+                        ]);
+                        Log::debug('Creating new detail', ['key' => $key, 'attrs' => $createAttrs]);
+                        \App\Models\PenawaranDetail::create($createAttrs);
+                    }
                 }
             }
+
+            // Hapus data yang tidak ada lagi — gunakan nama_section juga
+            \App\Models\PenawaranDetail::where('id_penawaran', $penawaranId)
+                ->whereNotIn(DB::raw("CONCAT(no, '|', IFNULL(area, ''), '|', IFNULL(nama_section, ''))"), $newKeys)
+                ->delete();
+
+            $isBest = !empty($data['is_best_price']) ? 1 : 0;
+            $bestPrice = isset($data['best_price']) ? floatval($data['best_price']) : 0;
+            $baseAmount = $isBest ? $bestPrice : $totalKeseluruhan;
+
+            $ppnNominal = ($baseAmount * $ppnPersen) / 100;
+            $grandTotal = $baseAmount + $ppnNominal;
+
+            \App\Models\Penawaran::where('id_penawaran', $penawaranId)->update([
+                'total' => $totalKeseluruhan,
+                'ppn_persen' => $ppnPersen,
+                'ppn_nominal' => $ppnNominal,
+                'grand_total' => $grandTotal,
+                'is_best_price' => $isBest,
+                'best_price' => $bestPrice
+            ]);
+
+            Log::debug('Penawaran saved', ['id_penawaran' => $penawaranId, 'total' => $totalKeseluruhan]);
+
+            return response()->json([
+                'success' => true,
+                'total' => $totalKeseluruhan,
+                'base_amount' => $baseAmount,
+                'ppn_nominal' => $ppnNominal,
+                'grand_total' => $grandTotal
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('PenawaranController::save error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString(), 'payload' => $data]);
+            return response()->json(['error' => true, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    public function preview(Request $request)
+    {
+        $id = $request->query('id');
+        $penawaran = \App\Models\Penawaran::find($id);
+
+        if (!$penawaran) {
+            return redirect()->route('penawaran.list')->with('error', 'Penawaran tidak ditemukan');
         }
 
-        // Hapus data yang tidak ada lagi
-        \App\Models\PenawaranDetail::where('id_penawaran', $penawaranId)
-            ->whereNotIn(DB::raw("CONCAT(no, '|', area)"), $newKeys)
-            ->delete();
+        $details = $penawaran->details()->get();
 
-        $isBest = !empty($data['is_best_price']) ? 1 : 0;
-        $bestPrice = isset($data['best_price']) ? floatval($data['best_price']) : 0;
-        $baseAmount = $isBest ? $bestPrice : $totalKeseluruhan;
+        $sections = $details->groupBy(function ($item) {
+            return $item->area . '|' . $item->nama_section;
+        })->map(function ($items, $key) {
+            [$area, $nama_section] = explode('|', $key);
+            return [
+                'area' => $area,
+                'nama_section' => $nama_section,
+                'data' => $items->map(function ($d) {
+                    return [
+                        'no' => $d->no,
+                        'tipe' => $d->tipe,
+                        'deskripsi' => $d->deskripsi,
+                        'qty' => $d->qty,
+                        'satuan' => $d->satuan,
+                        'harga_satuan' => $d->harga_satuan,
+                        'harga_total' => $d->harga_total,
+                        'hpp' => $d->hpp,
+                    ];
+                })->toArray()
+            ];
+        })->values()->toArray();
 
-        // Hitung PPN dan Grand Total
-        $ppnNominal = ($baseAmount * $ppnPersen) / 100;
-        $grandTotal = $baseAmount + $ppnNominal;
-
-        // Update penawaran dengan total, ppn, dan grand total
-        \App\Models\Penawaran::where('id_penawaran', $penawaranId)->update([
-            'total' => $totalKeseluruhan,
-            'ppn_persen' => $ppnPersen,
-            'ppn_nominal' => $ppnNominal,
-            'grand_total' => $grandTotal,
-            'is_best_price' => $isBest,
-            'best_price' => $bestPrice
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'total' => $totalKeseluruhan,
-            'base_amount' => $baseAmount,
-            'ppn_nominal' => $ppnNominal,
-            'grand_total' => $grandTotal
-        ]);
+        return view('penawaran.preview', compact('penawaran', 'sections'));
     }
 }

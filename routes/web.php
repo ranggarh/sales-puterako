@@ -18,6 +18,8 @@ Route::prefix('penawaran')->group(function () {
     Route::post('/tambah-penawaran', [PenawaranController::class, 'store'])->name('penawaran.store');
     Route::get('/follow-up', [PenawaranController::class, 'followUp'])->name('penawaran.followup');
     Route::get('/rekap-survey', [PenawaranController::class, 'rekapSurvey'])->name('penawaran.rekap-survey');
+    Route::get('/preview', [PenawaranController::class, 'preview'])->name('penawaran.preview');
+
 });
 
 Route::prefix('jasa')->group(function () {

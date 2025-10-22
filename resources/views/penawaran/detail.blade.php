@@ -129,7 +129,7 @@
                         <!-- Container untuk semua section -->
                         <div id="sectionsContainer"></div>
 
-                        <div class="mt-6 p-4 bg-gray-50 rounded-lg border-2 border-gray-300">
+                        <div class="mt-6 p-4 bg-gray-50 rounded-lg border-1 border-gray-200">
                             <div class="space-y-3">
                                 <!-- Input PPN -->
                                 <div class="flex justify-between items-center">
@@ -256,6 +256,250 @@
                             <div class="flex justify-between ">
                                 <div class="text-gray-700 font-bold">Grand Total Jasa</div>
                                 <div class="font-bold text-green-600">Rp <span id="jasaOverallGrand">0</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {{-- Tambahkan di dalam tab panel preview di detail.blade.php --}}
+                <!-- Panel Preview -->
+                <div class="tab-panel hidden" data-tab="preview">
+                    <style>
+                        @media print {
+                            .no-print {
+                                display: none !important;
+                            }
+
+                            body * {
+                                visibility: hidden;
+                            }
+
+                            #previewContent,
+                            #previewContent * {
+                                visibility: visible;
+                            }
+
+                            #previewContent {
+                                position: absolute;
+                                left: 0;
+                                top: 0;
+                                width: 100%;
+                            }
+
+                            .tab-btn,
+                            .border-b,
+                            nav,
+                            header {
+                                display: none !important;
+                            }
+                        }
+
+                        @page {
+                            margin: 1cm;
+                        }
+                    </style>
+
+                    <!-- Action Buttons -->
+                    <div class="mb-4 text-right no-print">
+                        <button onclick="window.print()"
+                            class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition font-semibold shadow-md">
+                            <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z">
+                                </path>
+                            </svg>
+                            Print / Save as PDF
+                        </button>
+                    </div>
+
+                    <div class="bg-white border rounded-lg p-8" id="previewContent">
+                        <!-- Header -->
+                        <div class="mb-8">
+                            <div class="-mx-8">
+                                <img src="{{ asset('assets/banner.png') }}" alt="Kop Perusahaan"
+                                    class="w-full h-auto object-cover" style="max-height:140px; display:block;" />
+                            </div>
+                        </div>
+
+                        <!-- Info Penawaran -->
+                        <div class="mb-6">
+                            <p class="mb-1">
+                                <span class="font-semibold">Surabaya,</span>
+                                {{ \Carbon\Carbon::parse($penawaran->created_at ?? now())->locale('id')->translatedFormat('F Y') }}
+                            </p>
+                            <p class="mb-4">
+                                <span class="font-semibold">Kepada Yth:</span><br>
+                                <strong>{{ $penawaran->nama_perusahaan }}</strong><br>
+                                @if ($penawaran->pic_perusahaan)
+                                    Up. {{ $penawaran->pic_perusahaan }}
+                                @endif
+                            </p>
+                            <p class="mb-1"><span class="font-semibold">Perihal:</span> {{ $penawaran->perihal }}</p>
+                            <p class="mb-4"><span class="font-semibold">No:</span> {{ $penawaran->no_penawaran }}</p>
+
+                            <p class="mb-4"><strong>Dengan Hormat,</strong></p>
+                            <p class="mb-6">
+                                Bersama ini kami PT. Puterako Inti Buana memberitahukan Penawaran Harga
+                                {{ $penawaran->perihal }}
+                                dengan perincian sebagai berikut:
+                            </p>
+                        </div>
+
+                        <!-- Sections -->
+                        @php
+                            $groupedSections = collect($sections)->groupBy('nama_section');
+                            $sectionNumber = 0;
+
+                            function convertToRoman($num)
+                            {
+                                $map = [
+                                    'M' => 1000,
+                                    'CM' => 900,
+                                    'D' => 500,
+                                    'CD' => 400,
+                                    'C' => 100,
+                                    'XC' => 90,
+                                    'L' => 50,
+                                    'XL' => 40,
+                                    'X' => 10,
+                                    'IX' => 9,
+                                    'V' => 5,
+                                    'IV' => 4,
+                                    'I' => 1,
+                                ];
+                                $result = '';
+                                foreach ($map as $roman => $value) {
+                                    while ($num >= $value) {
+                                        $result .= $roman;
+                                        $num -= $value;
+                                    }
+                                }
+                                return $result;
+                            }
+                        @endphp
+
+                        @foreach ($groupedSections as $namaSection => $sectionGroup)
+                            @php $sectionNumber++; @endphp
+
+                            <div class="mb-8 break-inside-avoid">
+                                <h3 class="font-bold text-lg mb-3">
+                                    {{ convertToRoman($sectionNumber) }}.
+                                    {{ $namaSection ?: 'Section ' . $sectionNumber }}
+                                </h3>
+
+                                <div class="overflow-x-auto">
+                                    <table class="w-full border-collapse border border-gray-300 text-sm">
+                                        <thead class="bg-gray-100">
+                                            <tr>
+                                                <th class="border border-gray-300 px-3 py-2 text-left w-12">No</th>
+                                                <th class="border border-gray-300 px-3 py-2 text-left">Tipe</th>
+                                                <th class="border border-gray-300 px-3 py-2 text-left">Deskripsi</th>
+                                                <th class="border border-gray-300 px-3 py-2 text-center w-16">Qty</th>
+                                                <th class="border border-gray-300 px-3 py-2 text-left w-20">Satuan</th>
+                                                <th class="border border-gray-300 px-3 py-2 text-right w-32">Harga Satuan
+                                                </th>
+                                                <th class="border border-gray-300 px-3 py-2 text-right w-32">Harga Total
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @php $subtotal = 0; @endphp
+                                            @foreach ($sectionGroup as $section)
+                                                @foreach ($section['data'] as $row)
+                                                    @php $subtotal += $row['harga_total']; @endphp
+                                                    <tr>
+                                                        <td class="border border-gray-300 px-3 py-2 text-center">
+                                                            {{ $row['no'] }}</td>
+                                                        <td class="border border-gray-300 px-3 py-2">{{ $row['tipe'] }}
+                                                        </td>
+                                                        <td class="border border-gray-300 px-3 py-2">
+                                                            <div style="white-space: pre-wrap;">{{ $row['deskripsi'] }}
+                                                            </div>
+                                                        </td>
+                                                        <td class="border border-gray-300 px-3 py-2 text-center">
+                                                            {{ number_format($row['qty'], 0) }}</td>
+                                                        <td class="border border-gray-300 px-3 py-2">{{ $row['satuan'] }}
+                                                        </td>
+                                                        <td class="border border-gray-300 px-3 py-2 text-right">
+                                                            {{ number_format($row['harga_satuan'], 0, ',', '.') }}
+                                                        </td>
+                                                        <td class="border border-gray-300 px-3 py-2 text-right">
+                                                            {{ number_format($row['harga_total'], 0, ',', '.') }}
+                                                        </td>
+                                                    </tr>
+                                                @endforeach
+                                            @endforeach
+                                            <tr class="bg-gray-50 font-semibold">
+                                                <td colspan="6" class="border border-gray-300 px-3 py-2 text-right">Sub
+                                                    Total</td>
+                                                <td class="border border-gray-300 px-3 py-2 text-right">
+                                                    {{ number_format($subtotal, 0, ',', '.') }}
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        @endforeach
+
+                        <!-- Summary -->
+                        <div class="mt-8 flex justify-end">
+                            <div class="w-96">
+                                <table class="w-full text-sm">
+                                    <tr>
+                                        <td class="py-2 font-semibold">Total</td>
+                                        <td class="py-2 text-right">Rp
+                                            {{ number_format($penawaran->total ?? 0, 0, ',', '.') }}</td>
+                                    </tr>
+
+                                    @if ($penawaran->is_best_price)
+                                        <tr>
+                                            <td class="py-2 font-semibold">Best Price</td>
+                                            <td class="py-2 text-right">Rp
+                                                {{ number_format($penawaran->best_price ?? 0, 0, ',', '.') }}</td>
+                                        </tr>
+                                    @endif
+
+                                    <tr>
+                                        <td class="py-2 font-semibold">PPN
+                                            {{ number_format((float) ($penawaran->ppn_persen ?? 11), 0, ',', '.') }}%</td>
+                                        <td class="py-2 text-right">Rp
+                                            {{ number_format($penawaran->ppn_nominal ?? 0, 0, ',', '.') }}</td>
+                                    </tr>
+                                    <tr class="border-t-2 border-gray-400">
+                                        <td class="py-2 font-bold text-lg">Grand Total</td>
+                                        <td class="py-2 text-right font-bold text-lg">
+                                            Rp {{ number_format($penawaran->grand_total ?? 0, 0, ',', '.') }}
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Notes -->
+                        <div class="mt-8 border-t pt-6">
+                            <h4 class="font-bold mb-3">NOTE:</h4>
+                            <ol class="list-decimal list-inside space-y-1 text-sm">
+                                <li>Penawaran berlaku sampai dengan 2 minggu</li>
+                                <li>Pembayaran: DP 50%, 40% progress, 10% setelah BAST</li>
+                                <li>Delivery time: 3-4 minggu setelah PO dan Pembayaran DP kami terima</li>
+                                <li>Garansi 1 Tahun: Kerusakan yang disebabkan pabrik pembuatannya<br>
+                                    <span class="ml-4">Yang tidak termasuk garansi adalah kerusakan yang diakibatkan
+                                        karena tegangan tidak stabil,
+                                        kemasukan air/benda kecil lainnya atau bencana alam</span>
+                                </li>
+                                <li>FOB {{ $penawaran->nama_perusahaan }}</li>
+                                <li>Penawaran diatas belum termasuk biaya pekerjaan sipil</li>
+                            </ol>
+                        </div>
+
+                        <!-- Footer -->
+                        <div class="mt-8">
+                            <p class="mb-8">Demikian penawaran ini kami sampaikan</p>
+                            <p class="font-semibold mb-1">Hormat kami,</p>
+                            <div class="mt-16">
+                                <p class="font-bold border-b border-gray-800 inline-block pb-1 w-48"></p>
+                                <p class="text-sm mt-1">Junly Kodradjaya</p>
                             </div>
                         </div>
                     </div>
@@ -1309,6 +1553,7 @@
                     });
 
                     fetch("{{ route('penawaran.save') }}", {
+                            credentials: 'same-origin',
                             method: "POST",
                             headers: {
                                 "Content-Type": "application/json",
@@ -1327,7 +1572,17 @@
                                 sections: allSectionsData
                             })
                         })
-                        .then(res => res.json())
+                        .then(async res => {
+                            const text = await res.text();
+                            try {
+                                const json = JSON.parse(text);
+                                console.log('Penawaran save response raw:', json);
+                                return json;
+                            } catch (e) {
+                                console.error('Non-JSON response:', text);
+                                throw new Error('Invalid JSON response from server');
+                            }
+                        })
                         .then(data => {
                             console.log('✅ Data saved with totals:', data);
                             btn.innerHTML = "✅ Tersimpan!";
