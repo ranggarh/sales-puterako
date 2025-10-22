@@ -126,21 +126,28 @@ class PenawaranController extends Controller
             ->whereNotIn(DB::raw("CONCAT(no, '|', area)"), $newKeys)
             ->delete();
 
+        $isBest = !empty($data['is_best_price']) ? 1 : 0;
+        $bestPrice = isset($data['best_price']) ? floatval($data['best_price']) : 0;
+        $baseAmount = $isBest ? $bestPrice : $totalKeseluruhan;
+
         // Hitung PPN dan Grand Total
-        $ppnNominal = ($totalKeseluruhan * $ppnPersen) / 100;
-        $grandTotal = $totalKeseluruhan + $ppnNominal;
+        $ppnNominal = ($baseAmount * $ppnPersen) / 100;
+        $grandTotal = $baseAmount + $ppnNominal;
 
         // Update penawaran dengan total, ppn, dan grand total
         \App\Models\Penawaran::where('id_penawaran', $penawaranId)->update([
             'total' => $totalKeseluruhan,
             'ppn_persen' => $ppnPersen,
             'ppn_nominal' => $ppnNominal,
-            'grand_total' => $grandTotal
+            'grand_total' => $grandTotal,
+            'is_best_price' => $isBest,
+            'best_price' => $bestPrice
         ]);
 
         return response()->json([
             'success' => true,
             'total' => $totalKeseluruhan,
+            'base_amount' => $baseAmount,
             'ppn_nominal' => $ppnNominal,
             'grand_total' => $grandTotal
         ]);

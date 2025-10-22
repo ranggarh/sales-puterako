@@ -142,10 +142,33 @@
                                     </div>
                                 </div>
 
+                                <!-- Best Price toggle + input -->
+                                <div class="flex items-center gap-4 mt-3">
+                                    <label class="flex items-center gap-2">
+                                        <input type="checkbox" id="isBestPrice"
+                                            {{ $penawaran->is_best_price ?? false ? 'checked' : '' }} />
+                                        <span class="text-sm font-medium">Gunakan Best Price</span>
+                                    </label>
+
+                                    <div class="flex items-center ml-4">
+                                        <input type="text" id="bestPriceInput"
+                                            class="border rounded px-3 py-2 bg-white w-40 text-right" placeholder="0"
+                                            value="{{ number_format($penawaran->best_price ?? 0, 2, ',', '.') }}">
+                                        <span class="ml-2 text-sm text-gray-600">Rp</span>
+                                    </div>
+                                </div>
+
                                 <!-- Total -->
                                 <div class="flex justify-between items-center text-lg font-semibold">
                                     <span>Total:</span>
                                     <span>Rp <span id="totalKeseluruhan">0</span></span>
+                                </div>
+
+                                <!-- Best Price display (hidden by default; JS toggles) -->
+                                <div id="bestPriceDisplayRow"
+                                    class="flex justify-between items-center text-lg font-semibold" style="display:none;">
+                                    <span>Best Price:</span>
+                                    <span>Rp <span id="bestPriceDisplay">0</span></span>
                                 </div>
 
                                 <!-- PPN Nominal -->
@@ -299,29 +322,15 @@
                 function parseNumber(value) {
                     if (typeof value === "string") {
                         value = value.trim();
-
-                        // Jika ada '.' dan ',' → asumsikan '.' sebagai pemisah ribuan dan ',' sebagai desimal
                         if (value.indexOf('.') !== -1 && value.indexOf(',') !== -1) {
                             value = value.replace(/\./g, '').replace(/,/g, '.');
-                        }
-                        // Jika hanya ada ',' → asumsikan ',' adalah desimal
-                        else if (value.indexOf(',') !== -1) {
+                        } else if (value.indexOf(',') !== -1) {
                             value = value.replace(/,/g, '.');
                         } else {
-                            // Hapus koma ribuan (format en: "1,234,567")
                             value = value.replace(/,/g, '');
                         }
                     }
-
                     const result = parseFloat(value) || 0;
-
-                    if (value && result !== 0) {
-                        console.log('🔢 parseNumber:', {
-                            input: value,
-                            output: result
-                        });
-                    }
-
                     return result;
                 }
 
@@ -1064,7 +1073,6 @@
                 function updateTotalKeseluruhan() {
                     let totalKeseluruhan = 0;
 
-                    // Jumlahkan semua subtotal dari setiap section
                     sections.forEach(section => {
                         const subtotalEl = document.getElementById(`${section.id}-subtotal`);
                         if (subtotalEl) {
@@ -1073,23 +1081,43 @@
                         }
                     });
 
-                    // Update Total
+                    // Update Total (sum of section subtotals)
                     document.getElementById('totalKeseluruhan').textContent = totalKeseluruhan.toLocaleString('id-ID');
 
-                    // Hitung PPN
-                    const ppnPersen = parseNumber(document.getElementById('ppnInput').value) || 11;
-                    const ppnNominal = (totalKeseluruhan * ppnPersen) / 100;
+                    // read PPN
+                    const ppnPersen = parseNumber(document.getElementById('ppnInput').value) || 0;
 
-                    // Hitung Grand Total
-                    const grandTotal = totalKeseluruhan + ppnNominal;
+                    // read Best Price toggle and value
+                    const useBest = document.getElementById('isBestPrice').checked;
+                    const bestPriceRaw = document.getElementById('bestPriceInput').value || '0';
+                    const bestPrice = parseNumber(bestPriceRaw);
 
-                    // Update display
+                    // base amount for PPN and grand total
+                    const baseAmount = useBest ? bestPrice : totalKeseluruhan;
+
+                    const ppnNominal = (baseAmount * ppnPersen) / 100;
+                    const grandTotal = baseAmount + ppnNominal;
+
+                    // update PPN display
                     document.getElementById('ppnPersenDisplay').textContent = ppnPersen;
                     document.getElementById('ppnNominal').textContent = ppnNominal.toLocaleString('id-ID');
+
+                    // show/hide best price display row
+                    const bestRow = document.getElementById('bestPriceDisplayRow');
+                    if (useBest) {
+                        bestRow.style.display = 'flex';
+                        document.getElementById('bestPriceDisplay').textContent = bestPrice.toLocaleString('id-ID');
+                    } else {
+                        bestRow.style.display = 'none';
+                    }
+
+                    // update grand total (based on baseAmount)
                     document.getElementById('grandTotal').textContent = grandTotal.toLocaleString('id-ID');
 
                     console.log('💰 Total Summary:', {
                         totalKeseluruhan,
+                        useBest,
+                        bestPrice,
                         ppnPersen,
                         ppnNominal,
                         grandTotal
@@ -1114,10 +1142,10 @@
                 }
 
                 // Event listener untuk perubahan PPN
-                document.getElementById('ppnInput').addEventListener('input', function() {
-                    console.log('🔄 PPN changed to:', this.value);
-                    updateTotalKeseluruhan();
-                });
+                document.getElementById('ppnInput').addEventListener('input', updateTotalKeseluruhan);
+                document.getElementById('isBestPrice').addEventListener('change', updateTotalKeseluruhan);
+                document.getElementById('bestPriceInput').addEventListener('input', updateTotalKeseluruhan);
+
 
                 // =====================================================
                 // EVENT LISTENERS PENAWARAN
@@ -1179,6 +1207,10 @@
                                     0,
                                 ppn_persen: parseNumber(document.getElementById('ppnInput')
                                     .value) || 11,
+                                is_best_price: document.getElementById('isBestPrice').checked ? 1 :
+                                    0,
+                                best_price: parseNumber(document.getElementById('bestPriceInput')
+                                    .value) || 0,
                                 sections: allSectionsData
                             })
                         })

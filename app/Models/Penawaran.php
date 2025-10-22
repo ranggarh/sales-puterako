@@ -15,10 +15,12 @@ class Penawaran extends Model
         'no_penawaran',
         'lokasi',
         'tiket',
+        'is_best_price',
+        'best_price',
         'total',           
         'ppn_persen',      
         'ppn_nominal',     
-        'grand_total'  
+        'grand_total'
     ];
 
     public function details()
