@@ -868,7 +868,8 @@
                             },
                             {
                                 title: 'Deskripsi',
-                                width: 250
+                                width: 250,
+                                wordWrap: true
                             },
                             {
                                 title: 'Vol',
@@ -1336,11 +1337,13 @@
                             },
                             {
                                 title: 'Tipe',
-                                width: 150
+                                width: 150,
+                                wordWrap: true
                             },
                             {
                                 title: 'Deskripsi',
-                                width: 300
+                                width: 300,
+                                wordWrap: true
                             },
                             {
                                 title: 'QTY',
