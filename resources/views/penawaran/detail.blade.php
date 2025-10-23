@@ -832,11 +832,14 @@
                                         value="${sectionData && sectionData.nama_section ? sectionData.nama_section : ''}">
                                 </div>
                                 <div class="flex gap-2">
-                                    <button class="add-row-btn bg-[#02ADB8] text-white px-3 py-1 rounded hover:bg-blue-700 transition text-sm">
-                                        ➕ Tambah Baris
+                                    <button class="flex items-center add-row-btn bg-[#02ADB8] text-white px-3 py-1 rounded hover:bg-blue-700 transition text-sm">
+                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg> Tambah Baris
                                     </button>
-                                    <button class="delete-section-btn bg-red-500 text-white px-3 py-1 rounded hover:bg-red-700 transition text-sm">
-                                        🗑️ Hapus Section
+                                    <button class="flex items-center delete-row-btn bg-red-500 text-white px-3 py-1 rounded hover:bg-red-700 transition text-sm">
+                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg> Hapus Baris
+                                    </button>
+                                    <button class="delete-section-btn bg-white text-red-500 px-3 py-1 rounded hover:bg-red-500 hover:text-white transition text-sm">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x-icon lucide-x"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
                                     </button>
                                 </div>
                             </div>
@@ -1157,74 +1160,52 @@
                 // =====================================================
 
                 function recalculateRow(spreadsheet, rowIndex, changedCol = null, newValue = null) {
-                    const profitPercent = parseNumber(document.getElementById('profitInput').value) || 0;
-                    const profitMultiplier = 1 + (profitPercent / 100);
+                    const profitRaw = parseNumber(document.getElementById('profitInput').value) || 0;
+                    let profitDecimal = profitRaw;
+                    if (profitRaw > 1) profitDecimal = profitRaw / 100;
 
-                    // Ambil data row saat ini
                     const row = spreadsheet.getRowData(rowIndex);
-
-                    // Gunakan newValue jika kolom yang berubah adalah QTY atau HPP
                     let hpp = parseNumber(row[7]);
                     let qty = parseNumber(row[3]);
 
-                    // Override dengan nilai baru jika ada
                     if (changedCol === 7) hpp = parseNumber(newValue);
                     if (changedCol === 3) qty = parseNumber(newValue);
 
-                    const hargaSatuan = hpp * profitMultiplier;
+                    let hargaSatuan = 0;
+                    if (profitDecimal > 0) {
+                        // Kalkulasi dan ROUNDUP ke ribuan
+                        hargaSatuan = Math.ceil((hpp / profitDecimal) / 1000) * 1000;
+                    } else {
+                        hargaSatuan = Math.ceil(hpp / 1000) * 1000;
+                    }
+
                     const total = qty * hargaSatuan;
 
-                    console.log('🔄 recalculateRow - Row:', rowIndex, {
-                        profitPercent,
-                        profitMultiplier,
-                        changedCol,
-                        newValue,
-                        hpp,
-                        qty,
-                        hargaSatuan,
-                        total,
-                        rawRow: row
-                    });
-
-                    // Parameter ke-4 harus TRUE agar cell ter-render ulang
                     spreadsheet.setValueFromCoords(5, rowIndex, hargaSatuan, true);
                     spreadsheet.setValueFromCoords(6, rowIndex, total, true);
                     updateSubtotal(sections.find(s => s.spreadsheet === spreadsheet));
-
-                    console.log('✅ Updated - Harga Satuan:', hargaSatuan, 'Harga Total:', total);
                 }
 
                 function recalculateAll() {
-                    console.log('🔄 recalculateAll - Starting...');
-
-                    const profitPercent = parseNumber(document.getElementById('profitInput').value) || 0;
-                    const profitMultiplier = 1 + (profitPercent / 100);
-
-                    console.log('📊 Profit Settings:', {
-                        profitPercent,
-                        profitMultiplier
-                    });
+                    const profitRaw = parseNumber(document.getElementById('profitInput').value) || 0;
+                    let profitDecimal = profitRaw;
+                    if (profitRaw > 1) profitDecimal = profitRaw / 100;
 
                     sections.forEach((section, sectionIdx) => {
-                        console.log(`📦 Section ${sectionIdx + 1}/${sections.length} - ID: ${section.id}`);
-
                         const allData = section.spreadsheet.getData();
-                        console.log(`   Total rows: ${allData.length}`);
-
                         allData.forEach((row, i) => {
                             const hpp = parseNumber(row[7]);
                             const qty = parseNumber(row[3]);
-                            const hargaSatuan = hpp * profitMultiplier;
+
+                            let hargaSatuan = 0;
+                            if (profitDecimal > 0) {
+                                hargaSatuan = Math.ceil((hpp / profitDecimal) / 1000) * 1000;
+                            } else {
+                                hargaSatuan = Math.ceil(hpp / 1000) * 1000;
+                            }
+
                             const total = qty * hargaSatuan;
 
-                            console.log(`   Row ${i + 1}:`, {
-                                hpp,
-                                qty,
-                                hargaSatuan,
-                                total
-                            });
-
-                            // Parameter ke-4 harus TRUE agar cell ter-render
                             section.spreadsheet.setValueFromCoords(5, i, hargaSatuan, true);
                             section.spreadsheet.setValueFromCoords(6, i, total, true);
                         });
@@ -1232,7 +1213,7 @@
                         updateSubtotal(section);
                     });
 
-                    console.log('✅ recalculateAll - Completed');
+                    updateTotalKeseluruhan();
                 }
 
                 function toggleEditMode(enable) {
@@ -1314,8 +1295,8 @@
                             <button class="flex items-center delete-row-btn bg-red-500 text-white px-3 py-1 rounded hover:bg-red-700 transition text-sm">
                                 <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg> Hapus Baris
                             </button>
-                            <button class="delete-section-btn bg-white text-gray-700 px-3 py-1 rounded hover:bg-gray-700 hover:text-white transition text-sm">
-                                ❌
+                            <button class="delete-section-btn bg-white text-red-500 px-3 py-1 rounded hover:bg-red-500 hover:text-white transition text-sm">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x-icon lucide-x"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
                             </button>
                         </div>
                         </div>
