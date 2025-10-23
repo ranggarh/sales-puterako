@@ -1,6 +1,7 @@
 {{-- filepath: resources/views/penawaran/pdf.blade.php --}}
 <!DOCTYPE html>
 <html>
+
 <head>
     <meta charset="utf-8">
     <title>Penawaran - {{ $penawaran->no_penawaran }}</title>
@@ -267,6 +268,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <div class="header">
@@ -276,19 +278,22 @@
 
         <!-- Info Penawaran -->
         <div class="info-section">
-            <p><strong>Surabaya, {{ \Carbon\Carbon::parse($penawaran->created_at ?? now())->locale('id')->translatedFormat('F Y') }}</strong></p>
+            <p><strong>Surabaya,
+                    {{ \Carbon\Carbon::parse($penawaran->created_at ?? now())->locale('id')->translatedFormat('F Y') }}</strong>
+            </p>
             <p style="margin-top: 20px;">Kepada Yth:</p>
             <p><strong>{{ $penawaran->nama_perusahaan }}</strong></p>
             <p>{{ $penawaran->lokasi }}</p>
             @if ($penawaran->pic_perusahaan)
                 <p><strong>Up. {{ $penawaran->pic_perusahaan }}</strong></p>
             @endif
-            
+
             <p style="margin-top: 20px;"><strong>Perihal:</strong> {{ $penawaran->perihal }}</p>
             <p><strong>No:</strong> {{ $penawaran->no_penawaran }}</p>
 
             <p class="greeting" style="margin-top: 20px;"><strong>Dengan Hormat,</strong></p>
-            <p>Bersama ini kami PT. Puterako Inti Buana memberitahukan Penawaran Harga {{ $penawaran->perihal }} dengan perincian sebagai berikut:</p>
+            <p>Bersama ini kami PT. Puterako Inti Buana memberitahukan Penawaran Harga {{ $penawaran->perihal }} dengan
+                perincian sebagai berikut:</p>
         </div>
 
         <!-- Sections -->
@@ -299,9 +304,19 @@
             function convertToRoman($num)
             {
                 $map = [
-                    'M' => 1000, 'CM' => 900, 'D' => 500, 'CD' => 400,
-                    'C' => 100, 'XC' => 90, 'L' => 50, 'XL' => 40,
-                    'X' => 10, 'IX' => 9, 'V' => 5, 'IV' => 4, 'I' => 1,
+                    'M' => 1000,
+                    'CM' => 900,
+                    'D' => 500,
+                    'CD' => 400,
+                    'C' => 100,
+                    'XC' => 90,
+                    'L' => 50,
+                    'XL' => 40,
+                    'X' => 10,
+                    'IX' => 9,
+                    'V' => 5,
+                    'IV' => 4,
+                    'I' => 1,
                 ];
                 $result = '';
                 foreach ($map as $roman => $value) {
@@ -342,7 +357,9 @@
                                 <tr>
                                     <td>{{ $row['no'] }}</td>
                                     <td>{{ $row['tipe'] }}</td>
-                                    <td><div class="pre-wrap">{{ $row['deskripsi'] }}</div></td>
+                                    <td>
+                                        <div class="pre-wrap">{{ $row['deskripsi'] }}</div>
+                                    </td>
                                     <td>{{ number_format($row['qty'], 0) }}</td>
                                     <td>{{ $row['satuan'] }}</td>
                                     <td>{{ number_format($row['harga_satuan'], 0, ',', '.') }}</td>
@@ -390,16 +407,17 @@
         <!-- Notes -->
         <div class="notes">
             <h4>NOTE:</h4>
-            <ol>
-                <li>Penawaran berlaku sampai dengan 2 minggu</li>
-                <li>Pembayaran: DP 50%, 40% progress, 10% setelah BAST</li>
-                <li>Delivery time: 3-4 minggu setelah PO dan Pembayaran DP kami terima</li>
-                <li>Garansi 1 Tahun: Kerusakan yang disebabkan pabrik pembuatannya<br>
-                    <span class="indent">Yang tidak termasuk garansi adalah kerusakan yang diakibatkan karena tegangan tidak stabil, kemasukan air/benda kecil lainnya atau bencana alam</span>
-                </li>
-                <li>FOB {{ $penawaran->nama_perusahaan }}</li>
-                <li>Penawaran diatas belum termasuk biaya pekerjaan sipil</li>
-            </ol>
+            @if (!empty($penawaran->note))
+                <ol>
+                    @foreach (explode("\n", $penawaran->note) as $note)
+                        @if (trim($note) !== '')
+                            <li>{{ $note }}</li>
+                        @endif
+                    @endforeach
+                </ol>
+            @else
+                <p class="text-gray-500 text-sm">Belum ada catatan penawaran.</p>
+            @endif
         </div>
 
         <!-- Footer -->
@@ -413,4 +431,5 @@
         </div>
     </div>
 </body>
+
 </html>
