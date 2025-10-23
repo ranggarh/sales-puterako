@@ -260,41 +260,73 @@
                         </div>
                     </div>
                 </div>
-                {{-- Tambahkan di dalam tab panel preview di detail.blade.php --}}
                 <!-- Panel Preview -->
                 <div class="tab-panel hidden" data-tab="preview">
                     <style>
                         @media print {
-                            .no-print {
-                                display: none !important;
+
+                            {
+                                font-family: "Arial", "Roboto", sans-serif !important;
+                                -webkit-print-color-adjust: exact;
+                                color-adjust: exact;
                             }
 
                             body * {
-                                visibility: hidden;
+                                visibility: hidden !important;
                             }
 
                             #previewContent,
                             #previewContent * {
-                                visibility: visible;
+                                visibility: visible !important;
                             }
 
                             #previewContent {
-                                position: absolute;
+                                position: absolute !important;
                                 left: 0;
                                 top: 0;
                                 width: 100%;
+                                background: white;
+                                margin: 0;
+                                padding: 0;
                             }
 
-                            .tab-btn,
-                            .border-b,
+                            .no-print,
                             nav,
-                            header {
+                            header,
+                            .tab-btn,
+                            .border-b {
                                 display: none !important;
                             }
-                        }
 
-                        @page {
-                            margin: 1cm;
+                            .break-inside-avoid {
+                                break-inside: auto !important;
+                            }
+
+                            table {
+                                page-break-inside: auto;
+                                border-collapse: collapse;
+                            }
+
+                            tr {
+                                page-break-inside: avoid;
+                                page-break-after: auto;
+                            }
+
+                            thead {
+                                display: table-header-group;
+                            }
+
+                            tfoot {
+                                display: table-footer-group;
+                            }
+
+                            .mb-8 {
+                                margin-bottom: 1rem !important;
+                            }
+
+                            @page {
+                                margin: 1cm;
+                            }
                         }
                     </style>
 
@@ -312,12 +344,12 @@
                         </button>
                     </div>
 
-                    <div class="bg-white border rounded-lg p-8" id="previewContent">
+                    <div class="bg-white  rounded-lg p-8" id="previewContent">
                         <!-- Header -->
                         <div class="mb-8">
-                            <div class="-mx-8">
+                            <div class="">
                                 <img src="{{ asset('assets/banner.png') }}" alt="Kop Perusahaan"
-                                    class="w-full h-auto object-cover" style="max-height:140px; display:block;" />
+                                    class=" w-full h-auto object-cover" style="max-height:140px; display:block;" />
                             </div>
                         </div>
 
@@ -779,40 +811,40 @@
                     ];
 
                     const sectionHTML = `
-    <div class="section-card p-4 mb-6 bg-white" id="${sectionId}">
-        <div class="flex justify-between items-center mb-3">
-            <div class="flex items-center gap-4">
-                <h3 class="text-lg font-bold text-gray-700">Section Jasa ${jasaSectionCounter}</h3>
-                <input type="text" class="nama-section-input border rounded px-3 py-1" 
-                    placeholder="Ex: Pekerjaan Instalasi" 
-                    value="${sectionData && sectionData.nama_section ? sectionData.nama_section : ''}">
-            </div>
-            <div class="flex gap-2">
-                <button class="add-row-btn bg-[#02ADB8] text-white px-3 py-1 rounded hover:bg-blue-700 transition text-sm">
-                    ➕ Tambah Baris
-                </button>
-                <button class="delete-section-btn bg-red-500 text-white px-3 py-1 rounded hover:bg-red-700 transition text-sm">
-                    🗑️ Hapus Section
-                </button>
-            </div>
-        </div>
+                        <div class="section-card p-4 mb-6 bg-white" id="${sectionId}">
+                            <div class="flex justify-between items-center mb-3">
+                                <div class="flex items-center gap-4">
+                                    <h3 class="text-lg font-bold text-gray-700">Section Jasa ${jasaSectionCounter}</h3>
+                                    <input type="text" class="nama-section-input border rounded px-3 py-1" 
+                                        placeholder="Ex: Pekerjaan Instalasi" 
+                                        value="${sectionData && sectionData.nama_section ? sectionData.nama_section : ''}">
+                                </div>
+                                <div class="flex gap-2">
+                                    <button class="add-row-btn bg-[#02ADB8] text-white px-3 py-1 rounded hover:bg-blue-700 transition text-sm">
+                                        ➕ Tambah Baris
+                                    </button>
+                                    <button class="delete-section-btn bg-red-500 text-white px-3 py-1 rounded hover:bg-red-700 transition text-sm">
+                                        🗑️ Hapus Section
+                                    </button>
+                                </div>
+                            </div>
 
-        <div class="spreadsheet-scroll-wrapper" style="overflow-x:auto;">
-            <div id="${spreadsheetId}"></div>
-        </div>
+                            <div class="spreadsheet-scroll-wrapper" style="overflow-x:auto;">
+                                <div id="${spreadsheetId}"></div>
+                            </div>
 
-        <div class="mt-3 flex items-start">
-            <!-- kiri: spreadsheet tetap mengambil ruang -->
-            <div class="flex-1"></div>
+                            <div class="mt-3 flex items-start">
+                                <!-- kiri: spreadsheet tetap mengambil ruang -->
+                                <div class="flex-1"></div>
 
-            <!-- kanan: ringkasan, lebar tetap dan rata kanan -->
-            <div class="w-full lg:w-56 flex flex-col items-end text-right space-y-1">
-                <div class="text-right font-semibold">Subtotal: Rp <span id="${sectionId}-subtotal">0</span></div>
-                <div class="text-sm">Profit: Rp <span class="${sectionId}-profit-val">0</span></div>
-                <div class="text-sm">PPH: Rp <span class="${sectionId}-pph-val">0</span></div>
-            </div>
-        </div>
-    </div>`;
+                                <!-- kanan: ringkasan, lebar tetap dan rata kanan -->
+                                <div class="w-full lg:w-56 flex flex-col items-end text-right space-y-1">
+                                    <div class="text-right font-semibold">Subtotal: Rp <span id="${sectionId}-subtotal">0</span></div>
+                                    <div class="text-sm">Profit: Rp <span class="${sectionId}-profit-val">0</span></div>
+                                    <div class="text-sm">PPH: Rp <span class="${sectionId}-pph-val">0</span></div>
+                                </div>
+                            </div>
+                        </div>`;
 
                     document.getElementById('jasaSectionsContainer').insertAdjacentHTML('beforeend', sectionHTML);
 
@@ -1252,35 +1284,35 @@
                     ];
 
                     const sectionHTML = `
-        <div class="section-card p-4 mb-6 bg-white" id="${sectionId}">
-            <div class="flex justify-between items-center mb-4">
-                <div class="flex items-center gap-4">
-                    <h3 class="text-lg font-bold text-gray-700">Section ${sectionCounter}</h3>
-                    <input type="text" class="nama-section-input border rounded px-3 py-1 ml-2" placeholder="Ex: Main Unit" value="${sectionData && sectionData.nama_section ? sectionData.nama_section : ''}">
-                    <div class="flex items-center">
-                        <label class="block text-sm font-semibold mr-2">Area Pemasangan:</label>
-                        <input type="text" class="area-select border rounded px-3 py-1 ml-2" placeholder="Ex: Kantor" value="${sectionData && sectionData.area ? sectionData.area : ''}">
-                    </div>
-                </div>
-                <div class="flex gap-2 items-center">
-                <button class="flex items-center add-row-btn bg-[#02ADB8] text-white px-3 py-1 rounded hover:bg-blue-700 transition text-sm">
-                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg> Tambah Baris
-                </button>
-                <button class="flex items-center delete-row-btn bg-red-500 text-white px-3 py-1 rounded hover:bg-red-700 transition text-sm">
-                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg> Hapus Baris
-                </button>
-                <button class="delete-section-btn bg-white text-gray-700 px-3 py-1 rounded hover:bg-gray-700 hover:text-white transition text-sm">
-                    ❌
-                </button>
-            </div>
-            </div>
-            <div class="spreadsheet-scroll-wrapper" style="overflow-x:auto;">
-                <div id="${spreadsheetId}"></div>
-            </div>
-            <div class="text-right mt-3 font-semibold text-gray-700">
-                Subtotal: Rp <span id="${sectionId}-subtotal">0</span>
-            </div>
-        </div>`;
+                    <div class="section-card p-4 mb-6 bg-white" id="${sectionId}">
+                        <div class="flex justify-between items-center mb-4">
+                            <div class="flex items-center gap-4">
+                                <h3 class="text-lg font-bold text-gray-700">Section ${sectionCounter}</h3>
+                                <input type="text" class="nama-section-input border rounded px-3 py-1 ml-2" placeholder="Ex: Main Unit" value="${sectionData && sectionData.nama_section ? sectionData.nama_section : ''}">
+                                <div class="flex items-center">
+                                    <label class="block text-sm font-semibold mr-2">Area Pemasangan:</label>
+                                    <input type="text" class="area-select border rounded px-3 py-1 ml-2" placeholder="Ex: Kantor" value="${sectionData && sectionData.area ? sectionData.area : ''}">
+                                </div>
+                            </div>
+                            <div class="flex gap-2 items-center">
+                            <button class="flex items-center add-row-btn bg-[#02ADB8] text-white px-3 py-1 rounded hover:bg-blue-700 transition text-sm">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg> Tambah Baris
+                            </button>
+                            <button class="flex items-center delete-row-btn bg-red-500 text-white px-3 py-1 rounded hover:bg-red-700 transition text-sm">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg> Hapus Baris
+                            </button>
+                            <button class="delete-section-btn bg-white text-gray-700 px-3 py-1 rounded hover:bg-gray-700 hover:text-white transition text-sm">
+                                ❌
+                            </button>
+                        </div>
+                        </div>
+                        <div class="spreadsheet-scroll-wrapper" style="overflow-x:auto;">
+                            <div id="${spreadsheetId}"></div>
+                        </div>
+                        <div class="text-right mt-3 font-semibold text-gray-700">
+                            Subtotal: Rp <span id="${sectionId}-subtotal">0</span>
+                        </div>
+                    </div>`;
 
                     document.getElementById('sectionsContainer').insertAdjacentHTML('beforeend', sectionHTML);
 
