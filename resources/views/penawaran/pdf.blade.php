@@ -1,4 +1,3 @@
-{{-- filepath: resources/views/penawaran/pdf.blade.php --}}
 <!DOCTYPE html>
 <html>
 
@@ -18,7 +17,7 @@
             line-height: 1.4;
             color: #000;
         }
-        
+
         .container {
             max-width: 100%;
             padding: 25px;
@@ -79,7 +78,7 @@
         table td {
             border: 1px solid #333;
             padding: 5px 6px;
-            vertical-align: top;
+            vertical-align: middle;
             word-wrap: break-word;
         }
 
@@ -96,39 +95,47 @@
             text-align: center;
         }
 
+        /* No */
         table th:nth-child(2),
         table td:nth-child(2) {
             width: 12%;
         }
 
+        /* Tipe */
         table th:nth-child(3),
         table td:nth-child(3) {
-            width: 38%;
+            width: 28%;
         }
 
+        /* Deskripsi (LEBAR) */
         table th:nth-child(4),
         table td:nth-child(4) {
             width: 6%;
             text-align: center;
         }
 
+        /* Qty (SEMPIT) */
         table th:nth-child(5),
         table td:nth-child(5) {
             width: 8%;
             text-align: center;
         }
 
+        /* Satuan */
         table th:nth-child(6),
         table td:nth-child(6) {
-            width: 16%;
+            width: 14%;
             text-align: right;
         }
 
+        /* Harga Satuan */
         table th:nth-child(7),
         table td:nth-child(7) {
-            width: 16%;
+            width: 14%;
             text-align: right;
         }
+
+        /* Harga Total */
 
         table tbody tr.subtotal td {
             background-color: #f5f5f5;
@@ -301,7 +308,7 @@
 
         <!-- Sections -->
         @php
-            $groupedSections = collect($sections)->groupBy('nama_section');
+            // $groupedSections = collect($sections)->groupBy('nama_section');
             $sectionNumber = 0;
 
             function convertToRoman($num)
@@ -332,65 +339,55 @@
             }
         @endphp
 
-        @foreach ($groupedSections as $namaSection => $sectionGroup)
-            @php $sectionNumber++; @endphp
-
-            <div class="section">
-                <h3 class="section-title">
-                    {{ convertToRoman($sectionNumber) }}. {{ $namaSection ?: 'Section ' . $sectionNumber }}
-                </h3>
-
-                <table>
-                    <thead>
+        @php $sectionNumber = 1; @endphp
+        @foreach ($groupedSections as $namaSection => $areas)
+            <h3>{{ convertToRoman($sectionNumber) }}. {{ $namaSection }}</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>No</th>
+                        <th>Tipe</th>
+                        <th>Deskripsi</th>
+                        <th>Qty</th>
+                        <th>Satuan</th>
+                        <th>Harga Satuan</th>
+                        <th>Harga Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @php $rowNum = 1; @endphp
+                    @foreach ($areas as $area => $rows)
+                        <!-- Baris area, merge semua kolom -->
                         <tr>
-                            <th>No</th>
-                            <th>Tipe</th>
-                            <th>Deskripsi</th>
-                            <th>Qty</th>
-                            <th>Satuan</th>
-                            <th>Harga Satuan</th>
-                            <th>Harga Total</th>
+                            <td colspan="7" style="background:#0099ff;font-weight:bold; color: white;">{{ $area }}</td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        @php $subtotal = 0; @endphp
-                        @foreach ($sectionGroup as $section)
-                            @foreach ($section['data'] as $row)
-                                @php $subtotal += $row['harga_total']; @endphp
-                                <tr>
-                                    <td>{{ $row['no'] }}</td>
-                                    <td>{{ $row['tipe'] }}</td>
-                                    <td>
-                                        <div class="pre-wrap">{{ $row['deskripsi'] }}</div>
-                                    </td>
-                                    <td>{{ number_format($row['qty'], 0) }}</td>
-                                    <td>{{ $row['satuan'] }}</td>
-                                    <td class="border border-gray-300 px-3 py-2 text-right">
-                                        @if ($row['is_mitra'])
-                                            <span style="color:#3498db;font-weight:bold; font-style:italic;">by
-                                                Mitra</span>
-                                        @else
-                                            {{ number_format($row['harga_satuan'], 0, ',', '.') }}
-                                        @endif
-                                    </td>
-                                    <td class="border border-gray-300 px-3 py-2 text-right">
-                                        @if ($row['is_mitra'])
-                                            <span style="color:#3498db;font-weight:bold; font-style:italic;">by
-                                                Mitra</span>
-                                        @else
-                                            {{ number_format($row['harga_total'], 0, ',', '.') }}
-                                        @endif
-                                    </td>
-                                </tr>
-                            @endforeach
+                        @foreach ($rows as $row)
+                            <tr>
+                                <td>{{ $rowNum++ }}</td>
+                                <td>{{ $row->tipe }}</td>
+                                <td>{{ $row->deskripsi }}</td>
+                                <td>{{ $row->qty }}</td>
+                                <td>{{ $row->satuan }}</td>
+                                <td>
+                                    @if (!empty($row->is_mitra))
+                                        <span style="color:#3498db;font-weight:bold;">by Mitra</span>
+                                    @else
+                                        {{ number_format($row->harga_satuan, 0, ',', '.') }}
+                                    @endif
+                                </td>
+                                <td>
+                                    @if (!empty($row->is_mitra))
+                                        <span style="color:#3498db;font-weight:bold;">by Mitra</span>
+                                    @else
+                                        {{ number_format($row->harga_total, 0, ',', '.') }}
+                                    @endif
+                                </td>
+                            </tr>
                         @endforeach
-                        <tr class="subtotal">
-                            <td colspan="6" style="text-align: right;">Sub Total</td>
-                            <td style="text-align: right;">{{ number_format($subtotal, 0, ',', '.') }}</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+                    @endforeach
+                </tbody>
+            </table>
+            @php $sectionNumber++; @endphp
         @endforeach
 
         <!-- Summary -->
@@ -415,7 +412,7 @@
                     </tr>
                     <tr class="grand-total">
                         <td>Grand Total</td>
-                        <td>Rp {{ number_format($penawaran->grand_total ?? 0, 0, ',', '.') }}</td>
+                        <td><span>Rp {{ number_format($penawaran->grand_total ?? 0, 0, ',', '.') }}</span></td>
                     </tr>
                 </table>
             </div>

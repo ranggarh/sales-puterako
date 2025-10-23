@@ -240,7 +240,14 @@ class PenawaranController extends Controller
             ];
         })->values()->toArray();
 
-        $pdf = Pdf::loadView('penawaran.pdf', compact('penawaran', 'sections'));
+        $groupedSections = [];
+        foreach ($details as $row) {
+            $section = $row->nama_section ?: 'Section';
+            $area = $row->area ?: '-';
+            $groupedSections[$section][$area][] = $row;
+        }
+
+        $pdf = Pdf::loadView('penawaran.pdf', compact('penawaran', 'groupedSections'));
         $safeNoPenawaran = str_replace(['/', '\\'], '-', $penawaran->no_penawaran);
         return $pdf->download('Penawaran-' . $safeNoPenawaran . '.pdf');
     }
