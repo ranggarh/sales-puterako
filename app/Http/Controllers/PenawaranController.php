@@ -239,4 +239,17 @@ class PenawaranController extends Controller
         $safeNoPenawaran = str_replace(['/', '\\'], '-', $penawaran->no_penawaran);
         return $pdf->download('Penawaran-' . $safeNoPenawaran . '.pdf');
     }
+
+    public function saveNotes(Request $request, $id)
+    {
+        $request->validate([
+            'note' => 'nullable|string'
+        ]);
+
+        $penawaran = \App\Models\Penawaran::findOrFail($id);
+        $penawaran->note = $request->note;
+        $penawaran->save();
+
+        return redirect()->back()->with('success', 'Notes berhasil disimpan.');
+    }
 }

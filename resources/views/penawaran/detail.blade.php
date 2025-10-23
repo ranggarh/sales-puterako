@@ -265,7 +265,7 @@
                     <style>
                         @media print {
 
-                            {
+                                {
                                 font-family: "Arial", "Roboto", sans-serif !important;
                                 -webkit-print-color-adjust: exact;
                                 color-adjust: exact;
@@ -333,8 +333,9 @@
                     <!-- Action Buttons -->
                     <div class="mb-4 text-right no-print">
                         <a href="{{ route('penawaran.exportPdf', ['id' => $penawaran->id_penawaran]) }}" target="_blank"
-                        class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 transition font-semibold shadow-md">
-                            <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 transition font-semibold shadow-md">
+                            <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z">
                                 </path>
@@ -508,20 +509,32 @@
                         </div>
 
                         <!-- Notes -->
+                        <div class="mt-8 mb-6">
+                            <form id="notesForm" method="POST"
+                                action="{{ route('penawaran.saveNotes', ['id' => $penawaran->id_penawaran]) }}">
+                                @csrf
+                                <label for="note" class="font-bold mb-2 block">Catatan Penawaran (Notes):</label>
+                                <textarea name="note" id="note" rows="7" class="border rounded w-full p-3 text-sm mb-2"
+                                    placeholder="Masukkan catatan penawaran...">{{ old('note', $penawaran->note) }}</textarea>
+                                <button type="submit"
+                                    class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition font-semibold shadow-md">
+                                    Simpan Notes
+                                </button>
+                            </form>
+                        </div>
                         <div class="mt-8 border-t pt-6">
                             <h4 class="font-bold mb-3">NOTE:</h4>
-                            <ol class="list-decimal list-inside space-y-1 text-sm">
-                                <li>Penawaran berlaku sampai dengan 2 minggu</li>
-                                <li>Pembayaran: DP 50%, 40% progress, 10% setelah BAST</li>
-                                <li>Delivery time: 3-4 minggu setelah PO dan Pembayaran DP kami terima</li>
-                                <li>Garansi 1 Tahun: Kerusakan yang disebabkan pabrik pembuatannya<br>
-                                    <span class="ml-4">Yang tidak termasuk garansi adalah kerusakan yang diakibatkan
-                                        karena tegangan tidak stabil,
-                                        kemasukan air/benda kecil lainnya atau bencana alam</span>
-                                </li>
-                                <li>FOB {{ $penawaran->nama_perusahaan }}</li>
-                                <li>Penawaran diatas belum termasuk biaya pekerjaan sipil</li>
-                            </ol>
+                            @if (!empty($penawaran->note))
+                                <ol class="list-decimal list-inside space-y-1 text-sm">
+                                    @foreach (explode("\n", $penawaran->note) as $note)
+                                        @if (trim($note) !== '')
+                                            <li>{{ $note }}</li>
+                                        @endif
+                                    @endforeach
+                                </ol>
+                            @else
+                                <p class="text-gray-500 text-sm">Belum ada catatan penawaran.</p>
+                            @endif
                         </div>
 
                         <!-- Footer -->

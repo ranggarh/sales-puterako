@@ -20,7 +20,8 @@ class Penawaran extends Model
         'total',           
         'ppn_persen',      
         'ppn_nominal',     
-        'grand_total'
+        'grand_total',
+        'note'
     ];
 
     public function details()
