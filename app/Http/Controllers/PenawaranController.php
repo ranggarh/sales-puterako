@@ -58,6 +58,7 @@ class PenawaranController extends Controller
                         'harga_satuan' => $d->harga_satuan,
                         'harga_total' => $d->harga_total,
                         'hpp' => $d->hpp,
+                        'is_mitra' => $d->is_mitra,
                     ];
                 })->toArray()
             ];
@@ -121,6 +122,8 @@ class PenawaranController extends Controller
                         'profit' => $profit,
                         'nama_section' => $namaSection,
                         'area' => $area,
+                        'is_mitra' => isset($row['is_mitra']) ? (int)$row['is_mitra'] : 0, // Tambahkan ini
+
                     ];
 
                     if (isset($existingDetails[$key])) {
@@ -201,6 +204,7 @@ class PenawaranController extends Controller
                         'harga_satuan' => $d->harga_satuan,
                         'harga_total' => $d->harga_total,
                         'hpp' => $d->hpp,
+                        'is_mitra' => $d->is_mitra,
                     ];
                 })->toArray()
             ];

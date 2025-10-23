@@ -1167,19 +1167,21 @@
                     const row = spreadsheet.getRowData(rowIndex);
                     let hpp = parseNumber(row[7]);
                     let qty = parseNumber(row[3]);
-
-                    if (changedCol === 7) hpp = parseNumber(newValue);
-                    if (changedCol === 3) qty = parseNumber(newValue);
+                    let isMitra = row[8] ? true : false; // Kolom ke-8 (index 8) untuk Mitra
 
                     let hargaSatuan = 0;
-                    if (profitDecimal > 0) {
-                        // Kalkulasi dan ROUNDUP ke ribuan
+                    let total = 0;
+
+                    if (isMitra) {
+                        hargaSatuan = 0;
+                        total = 0;
+                    } else if (profitDecimal > 0) {
                         hargaSatuan = Math.ceil((hpp / profitDecimal) / 1000) * 1000;
+                        total = qty * hargaSatuan;
                     } else {
                         hargaSatuan = Math.ceil(hpp / 1000) * 1000;
+                        total = qty * hargaSatuan;
                     }
-
-                    const total = qty * hargaSatuan;
 
                     spreadsheet.setValueFromCoords(5, rowIndex, hargaSatuan, true);
                     spreadsheet.setValueFromCoords(6, rowIndex, total, true);
@@ -1196,15 +1198,21 @@
                         allData.forEach((row, i) => {
                             const hpp = parseNumber(row[7]);
                             const qty = parseNumber(row[3]);
+                            const isMitra = row[8] ? true : false;
 
                             let hargaSatuan = 0;
-                            if (profitDecimal > 0) {
+                            let total = 0;
+
+                            if (isMitra) {
+                                hargaSatuan = 0;
+                                total = 0;
+                            } else if (profitDecimal > 0) {
                                 hargaSatuan = Math.ceil((hpp / profitDecimal) / 1000) * 1000;
+                                total = qty * hargaSatuan;
                             } else {
                                 hargaSatuan = Math.ceil(hpp / 1000) * 1000;
+                                total = qty * hargaSatuan;
                             }
-
-                            const total = qty * hargaSatuan;
 
                             section.spreadsheet.setValueFromCoords(5, i, hargaSatuan, true);
                             section.spreadsheet.setValueFromCoords(6, i, total, true);
@@ -1272,9 +1280,10 @@
                         row.harga_satuan || 0,
                         row.harga_total || 0,
                         row.hpp || 0,
+                        row.is_mitra ? true : false 
                     ]) : [
-                        ['', '', '', 0, '', 0, 0, 0],
-                        ['', '', '', 0, '', 0, 0, 0],
+                        ['', '', '', 0, '', 0, 0, 0, false],
+                        ['', '', '', 0, '', 0, 0, 0, false],
                     ];
 
                     const sectionHTML = `
@@ -1318,13 +1327,11 @@
                             },
                             {
                                 title: 'Tipe',
-                                width: 150,
-                                wordWrap: true
+                                width: 150
                             },
                             {
                                 title: 'Deskripsi',
-                                width: 300,
-                                wordWrap: true
+                                width: 300
                             },
                             {
                                 title: 'QTY',
@@ -1352,6 +1359,11 @@
                                 width: 100,
                                 type: 'numeric'
                             },
+                            {
+                                title: 'Mitra',
+                                width: 80,
+                                type: 'checkbox'
+                            } // Tambah ini
                         ],
                         tableOverflow: true,
                         tableWidth: '100%',
@@ -1364,15 +1376,15 @@
                                 rowIndex,
                                 value,
                                 columnName: ['No', 'Tipe', 'Deskripsi', 'QTY', 'Satuan',
-                                    'Harga Satuan', 'Harga Total', 'HPP'
+                                    'Harga Satuan', 'Harga Total', 'HPP', 'Mitra'
                                 ][colIndex]
                             });
 
-                            if (colIndex == 3 || colIndex == 7) {
+                            if (colIndex == 3 || colIndex == 7 || colIndex == 8) {
                                 console.log('✨ Triggering recalculateRow with new value:', value);
                                 recalculateRow(spreadsheet, rowIndex, colIndex, value);
                             } else {
-                                console.log('⏭️ Skip calculation (column not QTY/HPP)');
+                                console.log('⏭️ Skip calculation (column not QTY/HPP/Mitra)');
                             }
                         }
                     });
@@ -1602,7 +1614,8 @@
                                 satuan: row[4],
                                 harga_satuan: parseNumber(row[5]),
                                 harga_total: parseNumber(row[6]),
-                                hpp: parseNumber(row[7])
+                                hpp: parseNumber(row[7]),
+                                is_mitra: row[8] ? 1 : 0
                             }))
                         };
                     });
