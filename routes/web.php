@@ -19,7 +19,7 @@ Route::prefix('penawaran')->group(function () {
     Route::get('/follow-up', [PenawaranController::class, 'followUp'])->name('penawaran.followup');
     Route::get('/rekap-survey', [PenawaranController::class, 'rekapSurvey'])->name('penawaran.rekap-survey');
     Route::get('/preview', [PenawaranController::class, 'preview'])->name('penawaran.preview');
-
+    Route::get('/export-pdf', [PenawaranController::class, 'exportPdf'])->name('penawaran.exportPdf');
 });
 
 Route::prefix('jasa')->group(function () {

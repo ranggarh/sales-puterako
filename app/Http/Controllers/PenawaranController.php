@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -206,5 +207,36 @@ class PenawaranController extends Controller
         })->values()->toArray();
 
         return view('penawaran.preview', compact('penawaran', 'sections'));
+    }
+
+    public function exportPdf(Request $request)
+    {
+        $id = $request->query('id');
+        $penawaran = \App\Models\Penawaran::find($id);
+        $details = $penawaran ? $penawaran->details()->get() : collect();
+
+        // Grouping section, sama seperti preview
+        $sections = $details->groupBy(function ($item) {
+            return $item->nama_section;
+        })->map(function ($items, $nama_section) {
+            return [
+                'nama_section' => $nama_section,
+                'data' => $items->map(function ($d) {
+                    return [
+                        'no' => $d->no,
+                        'tipe' => $d->tipe,
+                        'deskripsi' => $d->deskripsi,
+                        'qty' => $d->qty,
+                        'satuan' => $d->satuan,
+                        'harga_satuan' => $d->harga_satuan,
+                        'harga_total' => $d->harga_total,
+                    ];
+                })->toArray()
+            ];
+        })->values()->toArray();
+
+        $pdf = Pdf::loadView('penawaran.pdf', compact('penawaran', 'sections'));
+        $safeNoPenawaran = str_replace(['/', '\\'], '-', $penawaran->no_penawaran);
+        return $pdf->download('Penawaran-' . $safeNoPenawaran . '.pdf');
     }
 }

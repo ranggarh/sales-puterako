@@ -332,16 +332,15 @@
 
                     <!-- Action Buttons -->
                     <div class="mb-4 text-right no-print">
-                        <button onclick="window.print()"
-                            class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition font-semibold shadow-md">
-                            <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor"
-                                viewBox="0 0 24 24">
+                        <a href="{{ route('penawaran.exportPdf', ['id' => $penawaran->id_penawaran]) }}" target="_blank"
+                        class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 transition font-semibold shadow-md">
+                            <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z">
                                 </path>
                             </svg>
-                            Print / Save as PDF
-                        </button>
+                            Export PDF
+                        </a>
                     </div>
 
                     <div class="bg-white  rounded-lg p-8" id="previewContent">
