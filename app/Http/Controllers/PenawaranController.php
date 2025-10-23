@@ -234,6 +234,7 @@ class PenawaranController extends Controller
                         'satuan' => $d->satuan,
                         'harga_satuan' => $d->harga_satuan,
                         'harga_total' => $d->harga_total,
+                        'is_mitra' => $d->is_mitra,
                     ];
                 })->toArray()
             ];

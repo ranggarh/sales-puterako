@@ -17,17 +17,17 @@
             font-size: 11px;
             line-height: 1.4;
             color: #000;
-            padding: 15px;
         }
-
+        
         .container {
             max-width: 100%;
+            padding: 25px;
         }
 
-        /* Header */
         .header {
             margin-bottom: 15px;
             text-align: center;
+            padding: 0;
         }
 
         .header img {
@@ -35,6 +35,9 @@
             max-height: 120px;
             object-fit: contain;
             display: block;
+            margin-top: 0;
+            margin-bottom: 0;
+            padding: -15px;
         }
 
         /* Info Section */
@@ -270,10 +273,10 @@
 </head>
 
 <body>
+    <div class="header">
+        <img src="{{ public_path('assets/banner.png') }}" alt="Kop Perusahaan">
+    </div>
     <div class="container">
-        <div class="header">
-            <img src="{{ public_path('assets/banner.png') }}" alt="Kop Perusahaan">
-        </div>
         <!-- Header -->
 
         <!-- Info Penawaran -->
@@ -362,8 +365,22 @@
                                     </td>
                                     <td>{{ number_format($row['qty'], 0) }}</td>
                                     <td>{{ $row['satuan'] }}</td>
-                                    <td>{{ number_format($row['harga_satuan'], 0, ',', '.') }}</td>
-                                    <td>{{ number_format($row['harga_total'], 0, ',', '.') }}</td>
+                                    <td class="border border-gray-300 px-3 py-2 text-right">
+                                        @if ($row['is_mitra'])
+                                            <span style="color:#3498db;font-weight:bold; font-style:italic;">by
+                                                Mitra</span>
+                                        @else
+                                            {{ number_format($row['harga_satuan'], 0, ',', '.') }}
+                                        @endif
+                                    </td>
+                                    <td class="border border-gray-300 px-3 py-2 text-right">
+                                        @if ($row['is_mitra'])
+                                            <span style="color:#3498db;font-weight:bold; font-style:italic;">by
+                                                Mitra</span>
+                                        @else
+                                            {{ number_format($row['harga_total'], 0, ',', '.') }}
+                                        @endif
+                                    </td>
                                 </tr>
                             @endforeach
                         @endforeach
