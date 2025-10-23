@@ -34,35 +34,58 @@ class JasaController extends Controller
                 }
             }
 
-            // formula inverse (sama dengan view)
+            // formula inverse
             $afterProfit = $profitPercent > 0 ? ($totalAwal / (1 - ($profitPercent / 100))) : $totalAwal;
             $afterPph    = $pphPercent > 0 ? ($afterProfit / (1 - ($pphPercent / 100))) : $afterProfit;
 
-            // SAVE: store the "after" values (nominal totals as shown in view)
-            $profitValueToStore = round($afterProfit, 2); // store afterProfit (not difference)
-            $pphValueToStore    = round($afterPph, 2);    // store afterPph (not difference)
+            $profitValueToStore = round($afterProfit, 2);
+            $pphValueToStore    = round($afterPph, 2);
             $grandTotal         = round($afterPph, 2);
 
-            // create header jasa (DO NOT include total_awal if you don't want to use it)
-            $jasa = Jasa::create([
-                'id_penawaran'   => $penawaranId,
-                // 'total_awal'  => $totalAwal, // removed as requested
-                'profit_percent' => $profitPercent,
-                'profit_value'   => $profitValueToStore,
-                'pph_percent'    => $pphPercent,
-                'pph_value'      => $pphValueToStore,
-                'bpjsk_percent'  => 0,
-                'bpjsk_value'    => 0,
-                'grand_total'    => $grandTotal,
-            ]);
+            // jika header jasa sudah ada -> update, jika tidak -> create
+            $existingJasa = Jasa::where('id_penawaran', $penawaranId)->first();
+            if ($existingJasa) {
+                Log::debug('Existing Jasa found - updating', ['id_jasa' => $existingJasa->id_jasa]);
 
-            Log::debug('Created Jasa header', ['id_jasa' => $jasa->id_jasa, 'jasa' => $jasa->toArray()]);
+                $existingJasa->update([
+                    'profit_percent' => $profitPercent,
+                    'profit_value'   => $profitValueToStore,
+                    'pph_percent'    => $pphPercent,
+                    'pph_value'      => $pphValueToStore,
+                    'bpjsk_percent'  => 0,
+                    'bpjsk_value'    => 0,
+                    'grand_total'    => $grandTotal,
+                ]);
 
-            // create details (unchanged)
+                $jasa = $existingJasa;
+            } else {
+                $jasa = Jasa::create([
+                    'id_penawaran'   => $penawaranId,
+                    'profit_percent' => $profitPercent,
+                    'profit_value'   => $profitValueToStore,
+                    'pph_percent'    => $pphPercent,
+                    'pph_value'      => $pphValueToStore,
+                    'bpjsk_percent'  => 0,
+                    'bpjsk_value'    => 0,
+                    'grand_total'    => $grandTotal,
+                ]);
+                Log::debug('Created Jasa header', ['id_jasa' => $jasa->id_jasa]);
+            }
+
+            // --- PERBAIKAN: Gunakan ID sebagai key utama ---
+            $processedIds = [];
+
             foreach ($sections as $section) {
-                $namaSection = $section['nama_section'] ?? null;
+                $namaSection = $section['nama_section'] ?? '';
                 foreach ($section['data'] as $row) {
-                    JasaDetail::create([
+                    // Skip empty rows
+                    if (empty($row['deskripsi']) && empty($row['no'])) {
+                        continue;
+                    }
+
+                    $idJasaDetail = $row['id_jasa_detail'] ?? null;
+
+                    $attrs = [
                         'id_penawaran'  => $penawaranId,
                         'id_jasa'       => $jasa->id_jasa,
                         'nama_section'  => $namaSection,
@@ -75,8 +98,49 @@ class JasaController extends Controller
                         'total'         => $row['total'] ?? 0,
                         'profit'        => $profitPercent,
                         'pph'           => $pphPercent,
-                    ]);
+                    ];
+
+                    if ($idJasaDetail) {
+                        // UPDATE existing record by ID
+                        $detail = JasaDetail::find($idJasaDetail);
+                        if ($detail) {
+                            $detail->update($attrs);
+                            $processedIds[] = $idJasaDetail;
+                            Log::debug('Updated Jasa detail by ID', [
+                                'id_jasa_detail' => $idJasaDetail, 
+                                'attrs' => $attrs
+                            ]);
+                        } else {
+                            // ID tidak ditemukan, create new
+                            $detail = JasaDetail::create($attrs);
+                            $processedIds[] = $detail->getKey();
+                            Log::debug('ID not found, created new Jasa detail', [
+                                'id_jasa_detail' => $detail->getKey(), 
+                                'attrs' => $attrs
+                            ]);
+                        }
+                    } else {
+                        // CREATE new record
+                        $detail = JasaDetail::create($attrs);
+                        $processedIds[] = $detail->getKey();
+                        Log::debug('Created new Jasa detail', [
+                            'id_jasa_detail' => $detail->getKey(), 
+                            'attrs' => $attrs
+                        ]);
+                    }
                 }
+            }
+
+            // DELETE records yang tidak ada di payload (dihapus user)
+            $deleted = JasaDetail::where('id_jasa', $jasa->id_jasa)
+                ->whereNotIn(JasaDetail::query()->getModel()->getKeyName(), $processedIds)
+                ->delete();
+
+            if ($deleted > 0) {
+                Log::debug('Deleted unused Jasa details', [
+                    'id_jasa' => $jasa->id_jasa, 
+                    'deleted_count' => $deleted
+                ]);
             }
 
             DB::commit();
@@ -89,12 +153,20 @@ class JasaController extends Controller
                 'profit_value' => $profitValueToStore,
                 'pph_percent' => $pphPercent,
                 'pph_value' => $pphValueToStore,
-                'grand_total' => $grandTotal
+                'grand_total' => $grandTotal,
+                'processed_ids' => $processedIds,
+                'deleted_count' => $deleted ?? 0
             ]);
         } catch (\Throwable $e) {
             DB::rollBack();
-            Log::error('Jasa save error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString(), 'payload' => $data]);
-            return response()->json(['error' => true, 'message' => $e->getMessage()], 500);
+            Log::error('Jasa save error: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(), 
+                'payload' => $data
+            ]);
+            return response()->json([
+                'error' => true, 
+                'message' => $e->getMessage()
+            ], 500);
         }
     }
 }

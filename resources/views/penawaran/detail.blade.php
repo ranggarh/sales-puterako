@@ -610,7 +610,7 @@
                             return res.json();
                         })
                         .then(data => {
-                            console.log('🟢 Response dari /jasa/detail:', data); // Tambahkan log ini
+                            console.log('🟢 Response dari /jasa/detail:', data);
                             jasaInitialSections = data.sections || [];
                             jasaProfit = data.profit || 0;
                             jasaPph = data.pph || 0;
@@ -620,7 +620,16 @@
                             document.getElementById('jasaPphInput').value = jasaPph;
 
                             if (jasaHasExistingData) {
-                                jasaInitialSections.forEach(section => createJasaSection(section, false));
+                                // Tambahkan ID detail ke setiap row
+                                jasaInitialSections.forEach(section => {
+                                    if (section.data && Array.isArray(section.data)) {
+                                        section.data = section.data.map(row => ({
+                                            ...row,
+                                            id_jasa_detail: row.id_jasa_detail || null
+                                        }));
+                                    }
+                                    createJasaSection(section, false);
+                                });
                                 jasaIsEditMode = false;
                                 toggleJasaEditMode(false);
                                 document.getElementById('jasaEditModeBtn').classList.remove('hidden');
@@ -1014,6 +1023,19 @@
                     jasaSections.forEach(s => computeJasaSectionTotals(s));
                 });
 
+                function dedupeSectionData(section) {
+                    const seen = new Set();
+                    const filtered = [];
+                    (section.data || []).forEach(r => {
+                        const key =
+                            `${section.nama_section||''}||${String(r.no||'')}||${String((r.deskripsi||'').trim())}||${String(r.total||'')}`;
+                        if (!seen.has(key)) {
+                            seen.add(key);
+                            filtered.push(r);
+                        }
+                    });
+                    return filtered;
+                }
 
                 // Tombol simpan jasa
                 document.getElementById('jasaSaveAllBtn').addEventListener('click', () => {
@@ -1026,17 +1048,22 @@
                         const namaSectionInput = sectionElement.querySelector('.nama-section-input');
                         const rawData = section.spreadsheet.getData();
 
+                        const data = rawData.map(row => ({
+                            no: row[0],
+                            deskripsi: row[1],
+                            vol: parseNumber(row[2]),
+                            hari: parseNumber(row[3]),
+                            orang: parseNumber(row[4]),
+                            unit: parseNumber(row[5]),
+                            total: parseNumber(row[6]),
+                        }));
+
                         return {
                             nama_section: namaSectionInput.value,
-                            data: rawData.map(row => ({
-                                no: row[0],
-                                deskripsi: row[1],
-                                vol: parseNumber(row[2]),
-                                hari: parseNumber(row[3]),
-                                orang: parseNumber(row[4]),
-                                unit: parseNumber(row[5]),
-                                total: parseNumber(row[6]),
-                            }))
+                            data: dedupeSectionData({
+                                nama_section: namaSectionInput.value,
+                                data
+                            })
                         };
                     });
 
