@@ -412,65 +412,100 @@
 
                         @foreach ($groupedSections as $namaSection => $sectionGroup)
                             @php $sectionNumber++; @endphp
-
                             <div class="mb-8 break-inside-avoid">
                                 <h3 class="font-bold text-lg mb-3">
                                     {{ convertToRoman($sectionNumber) }}.
                                     {{ $namaSection ?: 'Section ' . $sectionNumber }}
                                 </h3>
-
                                 <div class="overflow-x-auto">
                                     <table class="w-full border-collapse border border-gray-300 text-sm">
                                         <thead class="bg-gray-100">
                                             <tr>
-                                                <th class="border border-gray-300 px-3 py-2 text-left w-12">No</th>
-                                                <th class="border border-gray-300 px-3 py-2 text-left">Tipe</th>
-                                                <th class="border border-gray-300 px-3 py-2 text-left">Deskripsi</th>
+                                                <th class="border border-gray-300 px-3 py-2 text-center  w-12">No</th>
+                                                <th class="border border-gray-300 px-3 py-2 text-center ">Tipe</th>
+                                                <th class="border border-gray-300 px-3 py-2 text-center ">Deskripsi</th>
                                                 <th class="border border-gray-300 px-3 py-2 text-center w-16">Qty</th>
-                                                <th class="border border-gray-300 px-3 py-2 text-left w-20">Satuan</th>
-                                                <th class="border border-gray-300 px-3 py-2 text-right w-32">Harga Satuan
+                                                <th class="border border-gray-300 px-3 py-2 text-center  w-20">Satuan</th>
+                                                <th class="border border-gray-300 px-3 py-2 text-center  w-32">Harga Satuan
                                                 </th>
                                                 <th class="border border-gray-300 px-3 py-2 text-right w-32">Harga Total
                                                 </th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            @php $subtotal = 0; @endphp
-                                            @foreach ($sectionGroup as $section)
-                                                @foreach ($section['data'] as $row)
-                                                    @php $subtotal += $row['harga_total']; @endphp
-                                                    <tr>
-                                                        <td class="border border-gray-300 px-3 py-2 text-center">
-                                                            {{ $row['no'] }}</td>
-                                                        <td class="border border-gray-300 px-3 py-2">{{ $row['tipe'] }}
-                                                        </td>
-                                                        <td class="border border-gray-300 px-3 py-2">
-                                                            <div style="white-space: pre-wrap;">{{ $row['deskripsi'] }}
-                                                            </div>
-                                                        </td>
-                                                        <td class="border border-gray-300 px-3 py-2 text-center">
-                                                            {{ number_format($row['qty'], 0) }}</td>
-                                                        <td class="border border-gray-300 px-3 py-2">{{ $row['satuan'] }}
-                                                        </td>
-                                                        <td class="border border-gray-300 px-3 py-2 text-right">
-                                                            {{ number_format($row['harga_satuan'], 0, ',', '.') }}
-                                                        </td>
-                                                        <td class="border border-gray-300 px-3 py-2 text-right">
-                                                            {{ number_format($row['harga_total'], 0, ',', '.') }}
-                                                        </td>
-                                                    </tr>
+                                            @php
+                                                $subtotal = 0;
+                                                $rowNum = 1;
+                                            @endphp
+                                            {{-- Group by area --}}
+                                            @foreach (collect($sectionGroup)->groupBy('area') as $area => $areaRows)
+                                                <tr>
+                                                    <td colspan="7"
+                                                        style="background:#67BC4B;font-weight:bold; color: white; text-align: center; padding: 8px;">
+                                                        {{ $area }}</td>
+                                                </tr>
+                                                @foreach ($areaRows as $section)
+                                                    @foreach ($section['data'] as $row)
+                                                        @php $subtotal += $row['harga_total']; @endphp
+                                                        <tr>
+                                                            <td class="border border-gray-300 px-3 py-2 text-center">
+                                                                {{ $row['no'] }}</td>
+                                                            <td class="border border-gray-300 px-3 py-2">
+                                                                {{ $row['tipe'] }}</td>
+                                                            <td class="border border-gray-300 px-3 py-2">
+                                                                {{ $row['deskripsi'] }}</td>
+                                                            </td>
+                                                            <td class="border border-gray-300 px-3 py-2 text-center">
+                                                                {{ number_format($row['qty'], 0) }}</td>
+                                                            <td class="border border-gray-300 px-3 py-2">
+                                                                {{ $row['satuan'] }}</td>
+                                                            <td class="border border-gray-300 px-3 py-2 text-right">
+                                                                {{ number_format($row['harga_satuan'], 0, ',', '.') }}</td>
+                                                            <td class="border border-gray-300 px-3 py-2 text-right">
+                                                                {{ number_format($row['harga_total'], 0, ',', '.') }}</td>
+                                                        </tr>
+                                                    @endforeach
                                                 @endforeach
                                             @endforeach
-                                            <tr class="bg-gray-50 font-semibold">
-                                                <td colspan="6" class="border border-gray-300 px-3 py-2 text-right">Sub
-                                                    Total</td>
-                                                <td class="border border-gray-300 px-3 py-2 text-right">
-                                                    {{ number_format($subtotal, 0, ',', '.') }}
-                                                </td>
-                                            </tr>
                                         </tbody>
                                     </table>
                                 </div>
+                            </div>
+
+                            <!-- Tabel Jasa Detail (tetap tampil di bawah) -->
+                            <!-- Tabel Jasa (Ringkasan) -->
+                            <div class="mb-8 break-inside-avoid">
+                                <h3 class="font-bold text-lg mb-3">
+                                    {{ convertToRoman($sectionNumber + 1) }}. Biaya Quotation Jasa
+                                </h3>
+                                <table class="w-full border-collapse border border-gray-300 text-sm">
+                                    <thead class="bg-gray-100">
+                                        <tr>
+                                            <th class="border border-gray-300 px-3 py-2 text-center w-12">No</th>
+                                            <th class="border border-gray-300 px-3 py-2 text-center">Deskripsi</th>
+                                            <th class="border border-gray-300 px-3 py-2 text-center w-16">Qty</th>
+                                            <th class="border border-gray-300 px-3 py-2 text-center w-20">Satuan</th>
+                                            <th class="border border-gray-300 px-3 py-2 text-center w-32">Harga Satuan</th>
+                                            <th class="border border-gray-300 px-3 py-2 text-right w-32">Harga Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td class="border border-gray-300 px-3 py-2 text-center">1</td>
+                                            <td class="border border-gray-300 px-3 py-2">
+                                                {{ $jasa->ringkasan ?? '' }}
+                                            </td>
+                                            <td class="border border-gray-300 px-3 py-2 text-center">1</td>
+                                            <td class="border border-gray-300 px-3 py-2 text-center">Lot</td>
+                                            <td class="border border-gray-300 px-3 py-2 text-right">
+                                                {{ number_format($jasa->grand_total ?? 0, 0, ',', '.') }}</td>
+                                            </td>
+                                            <td class="border border-gray-300 px-3 py-2 text-right">
+                                                {{ number_format($jasa->grand_total ?? 0, 0, ',', '.') }}</td>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
                             </div>
                         @endforeach
 
@@ -507,6 +542,19 @@
                                 </table>
                             </div>
                         </div>
+
+                        <!-- Tabel Jasa di Preview -->
+                        <form method="POST"
+                            action="{{ route('jasa.saveRingkasan', ['id_penawaran' => $penawaran->id_penawaran]) }}">
+                            @csrf
+                            <label for="ringkasan" class="font-bold mb-2 block">Ringkasan Jasa:</label>
+                            <textarea class="border rounded w-full p-3 text-sm mb-2" name="ringkasan" id="ringkasan"
+                                placeholder="Masukkan Ringkasan Jasa">{{ old('ringkasan', $jasa->ringkasan ?? '') }}</textarea>
+                            <button type="submit"
+                                class="bg-green-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition font-semibold shadow-md">
+                                Simpan Ringkasan Jasa
+                            </button>
+                        </form>
 
                         <!-- Notes -->
                         <div class="mt-8 mb-6">
@@ -548,6 +596,17 @@
                         </div>
                     </div>
                 </div>
+                <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        const input = document.getElementById('ringkasanJasa');
+                        const previewSpan = document.getElementById('ringkasanJasaPreview');
+                        if (input && previewSpan) {
+                            input.addEventListener('input', function() {
+                                previewSpan.textContent = input.value;
+                            });
+                        }
+                    });
+                </script>
             </div>
         </div>
     @endsection
@@ -1280,7 +1339,7 @@
                         row.harga_satuan || 0,
                         row.harga_total || 0,
                         row.hpp || 0,
-                        row.is_mitra ? true : false 
+                        row.is_mitra ? true : false
                     ]) : [
                         ['', '', '', 0, '', 0, 0, 0, false],
                         ['', '', '', 0, '', 0, 0, 0, false],

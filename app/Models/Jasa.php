@@ -15,7 +15,8 @@ class Jasa extends Model
         'pph_value',
         'bpjsk_percent',
         'bpjsk_value',
-        'grand_total'
+        'grand_total',
+        'ringkasan',
     ];
 
     public function penawaran()

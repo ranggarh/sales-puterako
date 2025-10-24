@@ -27,6 +27,7 @@ Route::prefix('jasa')->group(function () {
     Route::get('/detail', [JasaDetailController::class, 'show'])->name('jasa.detail');
     // Route::post('/save', [JasaDetailController::class, 'save'])->name('jasa.save');
     Route::post('/save', [JasaController::class, 'save'])->name('jasa.save');
+    Route::post('/save-ringkasan/{id_penawaran}', [JasaController::class, 'saveRingkasan'])->name('jasa.saveRingkasan');
 });
 
 Route::get('/dashboard', function () {

@@ -41,6 +41,9 @@ class PenawaranController extends Controller
 
         $profit = $details->first()->profit ?? 0;
 
+        $jasaDetails = \App\Models\JasaDetail::where('id_penawaran', $penawaran->id_penawaran)->get();
+        $jasa = \App\Models\Jasa::where('id_penawaran', $penawaran->id_penawaran)->first();
+
         $sections = $details->groupBy(function ($item) {
             return $item->area . '|' . $item->nama_section;
         })->map(function ($items, $key) {
@@ -64,7 +67,7 @@ class PenawaranController extends Controller
             ];
         })->values()->toArray();
 
-        return view('penawaran.detail', compact('penawaran', 'sections', 'profit'));
+        return view('penawaran.detail', compact('penawaran', 'sections', 'profit', 'jasaDetails', 'jasa'));
     }
 
     public function save(Request $request)
@@ -186,6 +189,7 @@ class PenawaranController extends Controller
         }
 
         $details = $penawaran->details()->get();
+        $jasaDetails = \App\Models\JasaDetail::where('id_penawaran', $penawaran->id_penawaran)->get();
 
         $sections = $details->groupBy(function ($item) {
             return $item->area . '|' . $item->nama_section;
@@ -210,7 +214,7 @@ class PenawaranController extends Controller
             ];
         })->values()->toArray();
 
-        return view('penawaran.preview', compact('penawaran', 'sections'));
+        return view('penawaran.preview', compact('penawaran', 'sections' , 'jasaDetails'));
     }
 
     public function exportPdf(Request $request)

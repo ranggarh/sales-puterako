@@ -19,6 +19,7 @@ class JasaController extends Controller
         $sections = $data['sections'] ?? [];
         $profitPercent = floatval($data['profit'] ?? 0);
         $pphPercent = floatval($data['pph'] ?? 0);
+        $ringkasan = $data['ringkasan'] ?? null;
 
         if (!$penawaranId) {
             return response()->json(['error' => 'penawaran_id required'], 400);
@@ -55,6 +56,7 @@ class JasaController extends Controller
                     'bpjsk_percent'  => 0,
                     'bpjsk_value'    => 0,
                     'grand_total'    => $grandTotal,
+                    'ringkasan'      => $ringkasan,
                 ]);
 
                 $jasa = $existingJasa;
@@ -68,6 +70,7 @@ class JasaController extends Controller
                     'bpjsk_percent'  => 0,
                     'bpjsk_value'    => 0,
                     'grand_total'    => $grandTotal,
+                    'ringkasan'      => $ringkasan,
                 ]);
                 Log::debug('Created Jasa header', ['id_jasa' => $jasa->id_jasa]);
             }
@@ -107,7 +110,7 @@ class JasaController extends Controller
                             $detail->update($attrs);
                             $processedIds[] = $idJasaDetail;
                             Log::debug('Updated Jasa detail by ID', [
-                                'id_jasa_detail' => $idJasaDetail, 
+                                'id_jasa_detail' => $idJasaDetail,
                                 'attrs' => $attrs
                             ]);
                         } else {
@@ -115,7 +118,7 @@ class JasaController extends Controller
                             $detail = JasaDetail::create($attrs);
                             $processedIds[] = $detail->getKey();
                             Log::debug('ID not found, created new Jasa detail', [
-                                'id_jasa_detail' => $detail->getKey(), 
+                                'id_jasa_detail' => $detail->getKey(),
                                 'attrs' => $attrs
                             ]);
                         }
@@ -124,7 +127,7 @@ class JasaController extends Controller
                         $detail = JasaDetail::create($attrs);
                         $processedIds[] = $detail->getKey();
                         Log::debug('Created new Jasa detail', [
-                            'id_jasa_detail' => $detail->getKey(), 
+                            'id_jasa_detail' => $detail->getKey(),
                             'attrs' => $attrs
                         ]);
                     }
@@ -138,7 +141,7 @@ class JasaController extends Controller
 
             if ($deleted > 0) {
                 Log::debug('Deleted unused Jasa details', [
-                    'id_jasa' => $jasa->id_jasa, 
+                    'id_jasa' => $jasa->id_jasa,
                     'deleted_count' => $deleted
                 ]);
             }
@@ -160,13 +163,27 @@ class JasaController extends Controller
         } catch (\Throwable $e) {
             DB::rollBack();
             Log::error('Jasa save error: ' . $e->getMessage(), [
-                'trace' => $e->getTraceAsString(), 
+                'trace' => $e->getTraceAsString(),
                 'payload' => $data
             ]);
             return response()->json([
-                'error' => true, 
+                'error' => true,
                 'message' => $e->getMessage()
             ], 500);
         }
+    }
+
+    public function saveRingkasan(Request $request, $id_penawaran)
+    {
+        $request->validate([
+            'ringkasan' => 'nullable|string'
+        ]);
+        $jasa = \App\Models\Jasa::where('id_penawaran', $id_penawaran)->first();
+        if ($jasa) {
+            $jasa->ringkasan = $request->ringkasan;
+            $jasa->save();
+            return back()->with('success', 'Ringkasan jasa berhasil disimpan.');
+        }
+        return back()->with('error', 'Data jasa tidak ditemukan.');
     }
 }
