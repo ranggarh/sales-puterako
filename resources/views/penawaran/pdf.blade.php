@@ -340,6 +340,7 @@
         @endphp
 
         @php $sectionNumber = 1; @endphp
+        @php $sectionNumber = 1; @endphp
         @foreach ($groupedSections as $namaSection => $areas)
             <h3>{{ convertToRoman($sectionNumber) }}. {{ $namaSection }}</h3>
             <table>
@@ -355,29 +356,31 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @php $rowNum = 1; @endphp
                     @foreach ($areas as $area => $rows)
-                        <!-- Baris area, merge semua kolom -->
                         <tr>
-                            <td colspan="7" style="background:#0099ff;font-weight:bold; color: white;">{{ $area }}</td>
+                            <td colspan="7"
+                                style="background:#67BC4B;font-weight:bold; color: white; text-align: center; padding: 8px; font-size: 12px;">
+                                {{ $area }}</td>
                         </tr>
                         @foreach ($rows as $row)
                             <tr>
-                                <td>{{ $rowNum++ }}</td>
+                                <td>{{ $row->no }}</td>
                                 <td>{{ $row->tipe }}</td>
                                 <td>{{ $row->deskripsi }}</td>
                                 <td>{{ $row->qty }}</td>
                                 <td>{{ $row->satuan }}</td>
                                 <td>
                                     @if (!empty($row->is_mitra))
-                                        <span style="color:#3498db;font-weight:bold;">by Mitra</span>
+                                        <span style="color:#3498db;font-weight:bold; font-style: italic;">by
+                                            Mitra</span>
                                     @else
                                         {{ number_format($row->harga_satuan, 0, ',', '.') }}
                                     @endif
                                 </td>
                                 <td>
                                     @if (!empty($row->is_mitra))
-                                        <span style="color:#3498db;font-weight:bold;">by Mitra</span>
+                                        <span style="color:#3498db;font-weight:bold; font-style: italic;">by
+                                            Mitra</span>
                                     @else
                                         {{ number_format($row->harga_total, 0, ',', '.') }}
                                     @endif
@@ -389,6 +392,33 @@
             </table>
             @php $sectionNumber++; @endphp
         @endforeach
+
+        <!-- Tabel Quotation Jasa, di luar loop section material -->
+        <h3>{{ convertToRoman($sectionNumber) }}. Biaya Quotation Jasa</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>No</th>
+                    <th>Tipe</th>
+                    <th>Deskripsi</th>
+                    <th>Qty</th>
+                    <th>Satuan</th>
+                    <th>Harga Satuan</th>
+                    <th>Harga Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>1</td>
+                    <td>Jasa</td>
+                    <td>{{ $jasa->ringkasan ?? '-' }}</td>
+                    <td>1</td>
+                    <td>Lot</td>
+                    <td>{{ number_format($jasa->grand_total ?? 0, 0, ',', '.') }}</td>
+                    <td>{{ number_format($jasa->grand_total ?? 0, 0, ',', '.') }}</td>
+                </tr>
+            </tbody>
+        </table>
 
         <!-- Summary -->
         <div class="summary clearfix">

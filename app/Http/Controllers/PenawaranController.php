@@ -214,7 +214,7 @@ class PenawaranController extends Controller
             ];
         })->values()->toArray();
 
-        return view('penawaran.preview', compact('penawaran', 'sections' , 'jasaDetails'));
+        return view('penawaran.preview', compact('penawaran', 'sections', 'jasaDetails'));
     }
 
     public function exportPdf(Request $request)
@@ -222,6 +222,7 @@ class PenawaranController extends Controller
         $id = $request->query('id');
         $penawaran = \App\Models\Penawaran::find($id);
         $details = $penawaran ? $penawaran->details()->get() : collect();
+
 
         // Grouping section, sama seperti preview
         $sections = $details->groupBy(function ($item) {
@@ -251,7 +252,9 @@ class PenawaranController extends Controller
             $groupedSections[$section][$area][] = $row;
         }
 
-        $pdf = Pdf::loadView('penawaran.pdf', compact('penawaran', 'groupedSections'));
+        $jasa = \App\Models\Jasa::where('id_penawaran', $penawaran->id_penawaran)->first();
+
+        $pdf = Pdf::loadView('penawaran.pdf', compact('penawaran', 'groupedSections', 'jasa'));
         $safeNoPenawaran = str_replace(['/', '\\'], '-', $penawaran->no_penawaran);
         return $pdf->download('Penawaran-' . $safeNoPenawaran . '.pdf');
     }
